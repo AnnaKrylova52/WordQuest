@@ -60,11 +60,12 @@ export const Words = () => {
             {definitions.map((def, index) => (
               <div className="border rounded-md mb-4" key={index}>
                 <div className="flex items-start">
-                  <span className="bg-gray-500 rounded px-1 ">
-                    {def.partOfSpeech}
-                  </span>
+                  <h3 className="p-1">Definition: {def.definition}</h3>
+
                   <div>
-                    <h3 className="p-1">Definition: {def.definition}</h3>
+                    <span className="bg-gray-500 rounded px-1 ">
+                      {def.partOfSpeech}
+                    </span>
 
                     {def.example && (
                       <p className="text-red-600">Example: {def.example}</p>

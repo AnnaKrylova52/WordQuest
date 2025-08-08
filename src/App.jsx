@@ -1,17 +1,18 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
-import { Words } from "./Word";
+import { AppRouter } from "./AppRouter/AppRouter";
 
 function App() {
-  const [count, setCount] = useState(0);
 
-  return (
-    <>
-      <Words></Words>
-    </>
-  );
+  return <AppRouter />
+    // <>
+    //   <BrowserRouter>
+    //     <AuthProvider>
+    //       <Header />
+    //       <AppRouter />
+    //       <Words />
+    //     </AuthProvider>
+    //   </BrowserRouter>
+    // </>
+  
 }
 
 export default App;
