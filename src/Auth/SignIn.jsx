@@ -51,7 +51,7 @@ export const SignIn = () => {
       {/* Левая часть с изображением */}
       <div className="lg:w-2/3 hidden lg:block relative">
         <img
-          src="assets/cartoon-book-shelve-background.svg"
+          src="src\assets\cartoon-book-shelve-background.svg"
           alt="Book Shelve"
           className="absolute inset-0 w-full h-full object-cover bg-red-500  dark:bg-red-800"
         />
@@ -68,11 +68,14 @@ export const SignIn = () => {
                 />
               ) : (
                 <div className="z-10">
+                  <div className="mb-10">
+                      <img  src="src\assets\logo.svg" alt="logo"  />
+                  </div>
                   <h1 className=" text-4xl mb-2  dark:text-white text-center font-bold">
                     Weclome back
                   </h1>
-          
-                  <p className="text-center mb-8 dark:text-white">
+
+                  <p className="text-center mb-8 dark:text-white font-medium">
                     Sign in to continue
                   </p>
 
@@ -137,7 +140,7 @@ export const SignIn = () => {
                       <div className="w-full border-t border-red-600"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-red-600 dark:text-white">
+                      <span className="px-2 bg-red-600 text-white">
                         Or continue with
                       </span>
                     </div>

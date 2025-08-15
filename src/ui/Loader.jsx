@@ -1,9 +1,9 @@
-export const Loader = ({ width, height}) => {
+export const Loader = ({ width = 8, height = 8 }) => {
   return (
     <div className="text-center mt-4 absolute top-1/2 left-1/2">
       <svg
         aria-hidden="true"
-        className={`inline w-${width} h-${height} text-gray-200 animate-spin dark:text-white fill-yellow-600`}
+        className={`inline w-${width} h-${height} text-red-200 animate-spin dark:text-white fill-red-600`}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

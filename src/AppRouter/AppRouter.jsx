@@ -4,7 +4,9 @@ import { Loader } from "../ui/Loader";
 import { SignIn } from "../Auth/SignIn";
 import { SignUp } from "../Auth/SignUp";
 import { MainLayout } from "./MainLayout";
-import { CollectionsPage } from "../pages/CollectionsPage"; // Добавьте этот компонент
+import { CollectionsPage } from "../pages/CollectionsPage";
+import { CreateCollection } from "../ui/CreateCollection";
+import { CollectionDetails } from "../ui/CollectionDetails";
 
 export const AppRouter = () => {
   const ProtectedRoute = () => {
@@ -27,7 +29,8 @@ export const AppRouter = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/collections" element={<CollectionsPage />} />
-          <Route path="/home" element={<div>Главная страница</div>} />
+          <Route path="/home" element={<CreateCollection title="Create new collection" button="Create"/>} />
+          <Route path="collections/:id" element={<CollectionDetails />} />
         </Route>
       </Route>
 
