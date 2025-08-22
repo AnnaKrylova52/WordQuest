@@ -28,7 +28,7 @@ export const Header = () => {
             Card collections
           </NavLink>
           <NavLink
-            to="/library"
+            to="/user/collections"
             className={({ isActive }) =>
               `${isActive ? " text-red-600" : "hover:text-red-500 transition"}`
             }

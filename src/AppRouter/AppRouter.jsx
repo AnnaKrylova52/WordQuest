@@ -7,13 +7,14 @@ import { MainLayout } from "./MainLayout";
 import { CollectionsPage } from "../pages/CollectionsPage";
 import { CreateCollection } from "../ui/CreateCollection";
 import { CollectionDetails } from "../ui/CollectionDetails";
+import { LibraryPage } from "../pages/LibraryPage";
 
 export const AppRouter = () => {
   const ProtectedRoute = () => {
     const { user, loading } = useAuth();
 
     if (loading) {
-      return <Loader width={8} height={8} />;
+      return <Loader />;
     }
 
     return user ? <Outlet /> : <Navigate to="/login" replace />;
@@ -29,8 +30,10 @@ export const AppRouter = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/collections" element={<CollectionsPage />} />
-          <Route path="/home" element={<CreateCollection title="Create new collection" button="Create"/>} />
-          <Route path="collections/:id" element={<CollectionDetails />} />
+          <Route path="/home" element={<div>No main page yet</div>} />
+          <Route path="/collections/:id" element={<CollectionDetails />} />
+          <Route path="/create-collection" element={<CreateCollection />} />
+          <Route path="/user/collections" element={<LibraryPage />} />
         </Route>
       </Route>
 

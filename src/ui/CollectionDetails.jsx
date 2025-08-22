@@ -7,10 +7,12 @@ import {
   XMarkIcon,
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
-import { useCollections } from "../store/useColletions";
+import { useCollections } from "../store/useCollections";
 import { useAuth } from "../hooks/useAuth";
 import { Loader } from "./Loader";
 import { nanoid } from "nanoid";
+import { ConfirmationModal } from "./confirmationModal";
+
 export const CollectionDetails = () => {
   const navigate = useNavigate();
   const {
@@ -22,9 +24,10 @@ export const CollectionDetails = () => {
     loading,
     updateTerm,
   } = useCollections();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [isAddTerm, setAddTerm] = useState(false);
   const [isUpdateTerm, setUpdateTerm] = useState(false);
+  const [isConfirm, setConfirm] = useState(false);
   const [newTerm, setNewTerm] = useState({ term: "", definition: "", id: "" });
   const { id } = useParams();
 
@@ -94,30 +97,34 @@ export const CollectionDetails = () => {
           <span>Back to collections</span>
         </button>
 
-        <div className="mb-8 ">
+        <div className="mb-8">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
               {currentCollection?.title}
             </h1>
-            {isAdmin && (
+            {(user.uid === currentCollection?.ownerId || isAdmin) && (
               <button
-                onClick={handleDeleteCollection}
-                className="text-white bg-red-600 hover:bg-red-700  py-2 px-4 rounded-3xl cursor-pointer transition"
+                onClick={() => setConfirm(true)}
+                className="text-white bg-red-600 hover:bg-red-700  py-2 px-4 rounded-3xl cursor-pointer transition "
               >
                 Delete
               </button>
             )}
           </div>
+          <p className="text-lg text-gray-700 dark:text-gray-200 mb-4">
+            Created by {currentCollection?.collectionOwner}
+          </p>
           {currentCollection?.description && (
-            <p className="text-lg text-gray-600 dark:text-gray-300">
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
               {currentCollection.description}
             </p>
           )}
+
           <div className="mt-4 flex items-center gap-4">
             <span className="px-3 py-1 bg-red-100 dark:bg-red-800/40 text-red-800 dark:text-red-200 rounded-full text-sm">
               {currentCollection?.words.length} terms
             </span>
-            {isAdmin && (
+            {(user.uid === currentCollection?.ownerId || isAdmin) && (
               <PlusCircleIcon
                 onClick={() => setAddTerm(true)}
                 className="text-neutral-700 dark:text-white w-8 h-8 hover:text-neutral-900 dark:hover:text-neutral-300 transition cursor-pointer"
@@ -137,7 +144,7 @@ export const CollectionDetails = () => {
                 <p className="py-4 pr-4 break-words min-w-0 flex-1">
                   {word.definition}
                 </p>
-                {isAdmin && (
+                {(user.uid === currentCollection?.ownerId || isAdmin) && (
                   <div className=" flex gap-2 flex-shrink-0">
                     <TrashIcon
                       onClick={() => deleteTerm(id, word.id)}
@@ -250,6 +257,13 @@ export const CollectionDetails = () => {
             </form>
           </div>
         </div>
+      )}
+      {isConfirm && (
+        <ConfirmationModal
+          title="Are you sure you want to delete collection?"
+          setClose={() => setConfirm(false)}
+          setConfirm={handleDeleteCollection}
+        />
       )}
     </div>
   );

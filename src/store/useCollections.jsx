@@ -10,14 +10,18 @@ import {
   arrayRemove,
   getDoc,
   collection,
+  serverTimestamp,
+  query,
+  where,
 } from "firebase/firestore";
 import { nanoid } from "nanoid";
-
 export const useCollections = create((set, get) => ({
   collections: [],
+  userCollections: [],
   loading: false,
   currentCollection: null,
   error: null,
+  subscribedCollections: [],
 
   fetchCollections: async () => {
     set({ loading: true, error: null });
@@ -61,13 +65,89 @@ export const useCollections = create((set, get) => ({
       throw error;
     }
   },
-  createCollection: async (collectionData) => {
+  fetchSubscriptions: async (userId) => {
+    set({ loading: true, error: null });
+    try {
+      const q = query(
+        collection(db, "collections"),
+        where("subscribedUsers", "array-contains", userId)
+      );
+      const querySnapshot = await getDocs(q);
+      const subscribedIds = querySnapshot.docs.map((doc) => doc.id);
+      const userCollections = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      set({
+        subscribedCollections: subscribedIds,
+        loading: false,
+        userCollections: userCollections,
+      });
+    } catch (error) {
+      set({
+        error: error.message,
+        loading: false,
+        subscribedCollections: [],
+        userCollections: [],
+      });
+      throw error;
+    }
+  },
+  subscribeToCollection: async (collectionId, userId) => {
+    try {
+      const { collections } = get();
+      const collectionToSubscribe = collections.find(
+        (c) => (c.id === collectionId)
+      );
+      await updateDoc(doc(db, "collections", collectionId), {
+        subscribedUsers: arrayUnion(userId),
+      });
+      set((state) => ({
+        subscribedCollections: [...state.subscribedCollections, collectionId],
+       userCollections: [...state.userCollections, collectionToSubscribe],
+      }));
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+  unsubscribeFormCollection: async (collectionId, userId) => {
+    try {
+      await updateDoc(doc(db, "collections", collectionId), {
+        subscribedUsers: arrayRemove(userId),
+      });
+      set((state) => ({
+        subscribedCollections: state.subscribedCollections.filter(
+          (id) => id !== collectionId
+        ),
+        userCollections: state.userCollections.filter(
+          (col) => col.id !== collectionId
+        ),
+      }));
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+
+  createCollection: async (collectionData, user, isPrivate) => {
     try {
       const id = nanoid();
-      await setDoc(doc(db, "collections", collectionData.title), {
-        ...collectionData,
-        firebaseId: id,
-      });
+      const userId = user.uid;
+
+      if (!isPrivate) {
+        await setDoc(doc(db, "collections", id), {
+          ...collectionData,
+          firebaseId: id,
+          collectionOwner: user.name,
+          isPrivate: isPrivate,
+          createdAt: serverTimestamp(),
+          totalUsers: 1,
+          ownerId: userId,
+          subscribedUsers: [userId],
+        });
+      }
+
       set((state) => ({
         collections: [...state.collections, { id, ...collectionData }],
       }));
@@ -85,7 +165,6 @@ export const useCollections = create((set, get) => ({
         collections: state.collections.filter((coll) => coll.id !== id),
         currentCollection: null,
       }));
-      navigate(-1);
     } catch (error) {
       set({ error: error.message });
       throw error;
@@ -98,25 +177,27 @@ export const useCollections = create((set, get) => ({
         state.currentCollection ||
         state.collections.find((c) => c.id === collectionId);
 
-      const term = collection.words.find((word) => word.id === termId);
+      if (!collection) throw new Error("Collection not found");
+      if (collection.words.length <= 3) {
+        throw new Error("Collection must have at least 3 terms");
+      }
+
+      const updatedWords = collection.words.filter(
+        (word) => word.id !== termId
+      );
+
+      // Обновляем основную коллекцию
       await updateDoc(doc(db, "collections", collectionId), {
-        words: arrayRemove(term),
+        words: updatedWords,
       });
 
       set((state) => ({
         collections: state.collections.map((coll) =>
-          coll.id === collectionId
-            ? { ...coll, words: coll.words.filter((w) => w.id !== termId) }
-            : coll
+          coll.id === collectionId ? { ...coll, words: updatedWords } : coll
         ),
         currentCollection:
           state.currentCollection?.id === collectionId
-            ? {
-                ...state.currentCollection,
-                words: state.currentCollection.words.filter(
-                  (w) => w.id !== termId
-                ),
-              }
+            ? { ...state.currentCollection, words: updatedWords }
             : state.currentCollection,
       }));
     } catch (error) {
@@ -124,7 +205,6 @@ export const useCollections = create((set, get) => ({
       throw error;
     }
   },
-
   updateTerm: async (collectionId, termId, updatedTerm) => {
     try {
       const state = get();
@@ -150,7 +230,6 @@ export const useCollections = create((set, get) => ({
       await updateDoc(doc(db, "collections", collectionId), {
         words: updatedWords,
       });
-
       // Обновляем локальное состояние
       set((state) => ({
         collections: state.collections.map((coll) =>
@@ -176,6 +255,7 @@ export const useCollections = create((set, get) => ({
       await updateDoc(docRef, {
         words: arrayUnion(newTerm),
       });
+
       set((state) => ({
         collections: state.collections.map((coll) =>
           coll.id === collectionId
