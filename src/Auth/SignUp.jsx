@@ -5,8 +5,9 @@ import { Loader } from "../ui/Loader";
 import {
   LockClosedIcon,
   EnvelopeIcon,
-  BookOpenIcon,
   UserIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 
 export const SignUp = () => {
@@ -17,6 +18,7 @@ export const SignUp = () => {
     name: "",
   });
   const { register, regWithGoogle, showNotification, loading } = useAuth();
+  const [isPasswordSeen, setSeePassword] = useState(false);
 
   // Обработчик изменения полей формы
   const handleChange = (event) => {
@@ -66,7 +68,7 @@ export const SignUp = () => {
             <>
               <div className="z-10">
                 <div className="mb-10">
-                  <img src="src\assets\logo.svg" alt="logo"  />
+                  <img src="src\assets\logo.svg" alt="logo" />
                 </div>
                 <h1 className=" text-3xl mb-2  dark:text-white text-center font-bold">
                   Create your account
@@ -111,9 +113,20 @@ export const SignUp = () => {
                   </div>
                   <div className="relative">
                     <LockClosedIcon className="absolute left-3 bottom-1/4  h-6 w-6 text-red-500" />
+                    {isPasswordSeen ? (
+                      <EyeSlashIcon
+                        className="absolute right-3 bottom-1/4  h-6 w-6 text-red-600 cursor-pointer "
+                        onClick={() => setSeePassword(false)}
+                      />
+                    ) : (
+                      <EyeIcon
+                        className="absolute right-3 bottom-1/4  h-6 w-6 text-red-600 cursor-pointer"
+                        onClick={(e) => setSeePassword(true)}
+                      />
+                    )}
                     <input
                       minLength={6}
-                      type="password"
+                      type={`${isPasswordSeen ? "text" : "password"}`}
                       name="password"
                       id="password"
                       onChange={handleChange}
@@ -124,9 +137,9 @@ export const SignUp = () => {
                       autoComplete="off"
                     />
                   </div>
-                  <div>
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={`${isPasswordSeen ? "text" : "password"}`}
                       name="confirmPassword"
                       id="confirmPassword"
                       onChange={handleChange}

@@ -5,7 +5,8 @@ import { Loader } from "../ui/Loader";
 import {
   LockClosedIcon,
   EnvelopeIcon,
-  BookOpenIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 import { ResetPassword } from "./ResetPassword";
 
@@ -16,6 +17,7 @@ export const SignIn = () => {
     password: "",
     isRemember: false,
   });
+  const [isPasswordSeen, setSeePassword] = useState(false);
   const { login, regWithGoogle, loading } = useAuth();
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   // Обработчик изменения полей формы
@@ -69,7 +71,7 @@ export const SignIn = () => {
               ) : (
                 <div className="z-10">
                   <div className="mb-10">
-                      <img  src="src\assets\logo.svg" alt="logo"  />
+                    <img src="src\assets\logo.svg" alt="logo" />
                   </div>
                   <h1 className=" text-4xl mb-2  dark:text-white text-center font-bold">
                     Weclome back
@@ -100,9 +102,20 @@ export const SignIn = () => {
                       />
                     </div>
                     <div className="relative">
-                      <LockClosedIcon className="absolute left-3 bottom-1/4  h-6 w-6 text-red-600" />
+                      <LockClosedIcon className="absolute left-3 bottom-1/4  h-6 w-6 text-red-600 " />
+                      {isPasswordSeen ? (
+                        <EyeSlashIcon
+                          className="absolute right-3 bottom-1/4  h-6 w-6 text-red-600 cursor-pointer "
+                          onClick={() => setSeePassword(false)}
+                        />
+                      ) : (
+                        <EyeIcon
+                          className="absolute right-3 bottom-1/4  h-6 w-6 text-red-600 cursor-pointer"
+                          onClick={(e) => setSeePassword(true)}
+                        />
+                      )}
                       <input
-                        type="password"
+                        type={`${isPasswordSeen ? "text" : "password"}`}
                         name="password"
                         id="password"
                         onChange={handleChange}
