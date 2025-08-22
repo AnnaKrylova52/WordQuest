@@ -15,6 +15,7 @@ import {
   where,
 } from "firebase/firestore";
 import { nanoid } from "nanoid";
+import axios from "axios";
 export const useCollections = create((set, get) => ({
   collections: [],
   userCollections: [],
@@ -97,14 +98,14 @@ export const useCollections = create((set, get) => ({
     try {
       const { collections } = get();
       const collectionToSubscribe = collections.find(
-        (c) => (c.id === collectionId)
+        (c) => c.id === collectionId
       );
       await updateDoc(doc(db, "collections", collectionId), {
         subscribedUsers: arrayUnion(userId),
       });
       set((state) => ({
         subscribedCollections: [...state.subscribedCollections, collectionId],
-       userCollections: [...state.userCollections, collectionToSubscribe],
+        userCollections: [...state.userCollections, collectionToSubscribe],
       }));
     } catch (error) {
       set({ error: error.message });
@@ -273,6 +274,52 @@ export const useCollections = create((set, get) => ({
     } catch (error) {
       set({ error: error.message });
       throw error;
+    }
+  },
+  updateTitle: async (collectionId, title) => {
+    try {
+      const docRef = doc(db, "collections", collectionId);
+      await updateDoc(docRef, {
+        title: title,
+      });
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+  updateDescription: async (collectionId, description) => {
+    try {
+      const docRef = doc(db, "collections", collectionId);
+      await updateDoc(docRef, {
+        description: description,
+      });
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+  fetchDefinitions: async (term) => {
+    try {
+      const response = await axios.get(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${term}`
+      );
+
+      const data = await response.data;
+
+      const allDefinitions = [];
+      data.forEach((word) => {
+        word.meanings.forEach((meaning) => {
+          meaning.definitions.forEach((def) => {
+            allDefinitions.push({
+              definition: def.definition,
+            });
+          });
+        });
+      });
+
+      return allDefinitions;
+    } catch (error) {
+      console.error("Error:", error);
     }
   },
 }));

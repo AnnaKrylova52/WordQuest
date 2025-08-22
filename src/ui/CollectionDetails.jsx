@@ -1,18 +1,20 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useRef, useEffect, useState } from "react";
+import { useParams, useNavigate, useAsyncError } from "react-router-dom";
 import {
   ArrowLeftIcon,
   TrashIcon,
   PlusCircleIcon,
   XMarkIcon,
   PencilSquareIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { useCollections } from "../store/useCollections";
 import { useAuth } from "../hooks/useAuth";
 import { Loader } from "./Loader";
 import { nanoid } from "nanoid";
 import { ConfirmationModal } from "./confirmationModal";
-
+import { DefinitionsContainer } from "./DefinitionsContainer";
+import { Modal } from "./Modal";
 export const CollectionDetails = () => {
   const navigate = useNavigate();
   const {
@@ -23,11 +25,20 @@ export const CollectionDetails = () => {
     currentCollection,
     loading,
     updateTerm,
+    fetchDefinitions,
+    updateDescription,
+    updateTitle,
   } = useCollections();
-  const { isAdmin, user } = useAuth();
+  const definitionTextareaRef = useRef(null);
+  const { isAdmin, user, showNotification } = useAuth();
   const [isAddTerm, setAddTerm] = useState(false);
+  const [isUpdateTitle, setUpdateTitle] = useState(false);
   const [isUpdateTerm, setUpdateTerm] = useState(false);
+  const [isUpdateDescription, setUpdateDescription] = useState(false);
   const [isConfirm, setConfirm] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [definitions, setDefinitions] = useState([]);
   const [newTerm, setNewTerm] = useState({ term: "", definition: "", id: "" });
   const { id } = useParams();
 
@@ -46,7 +57,25 @@ export const CollectionDetails = () => {
       id: term.id,
     });
   };
-
+  const handleDefinitions = async (term) => {
+    const defs = await fetchDefinitions(term);
+    setDefinitions(defs);
+  };
+  const handleDefinitionClick = (def) => {
+    setDefinitions([]);
+    setNewTerm({
+      ...newTerm,
+      definition: def.definition,
+    });
+    // После установки значения, обновляем высоту текстового поля
+    setTimeout(() => {
+      if (definitionTextareaRef.current) {
+        definitionTextareaRef.current.style.height = "auto";
+        definitionTextareaRef.current.style.height =
+          definitionTextareaRef.current.scrollHeight + "px";
+      }
+    }, 0);
+  };
   const handleAddTerm = async () => {
     try {
       if (isAddTerm) {
@@ -74,6 +103,7 @@ export const CollectionDetails = () => {
     try {
       deleteCollection(id);
       navigate("/collections");
+      showNotification("success", "Collection deleted");
     } catch (error) {
       console.error("Error deleting collection: ", error);
     }
@@ -83,7 +113,35 @@ export const CollectionDetails = () => {
     setAddTerm(false);
     setUpdateTerm(false);
   };
+  const handleChangeTitle = async () => {
+    try {
+      await updateTitle(id, newTitle);
+      await fetchCollection(id);
+      setNewTitle("");
+      setUpdateTitle(false);
+      showNotification(
+        "success",
+        "Collection's title has been changed successfully!"
+      );
+    } catch (error) {
+      console.error("Error changing title: ", error);
+    }
+  };
 
+  const handleChangeDesciption = async () => {
+    try {
+      await updateDescription(id, newDescription);
+      await fetchCollection(id);
+      setNewDescription("");
+      setUpdateDescription(false);
+      showNotification(
+        "success",
+        "Collection's description has been changed successfully!"
+      );
+    } catch (error) {
+      console.error("Error changing title: ", error);
+    }
+  };
   if (loading) return <Loader />;
 
   return (
@@ -99,9 +157,15 @@ export const CollectionDetails = () => {
 
         <div className="mb-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              {currentCollection?.title}
-            </h1>
+            <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold ">
+                {currentCollection?.title}
+              </h1>
+              <PencilSquareIcon
+                onClick={() => setUpdateTitle(true)}
+                className="w-6 h-6"
+              />
+            </div>
             {(user.uid === currentCollection?.ownerId || isAdmin) && (
               <button
                 onClick={() => setConfirm(true)}
@@ -111,16 +175,24 @@ export const CollectionDetails = () => {
               </button>
             )}
           </div>
-          <p className="text-lg text-gray-700 dark:text-gray-200 mb-4">
+
+          <p className="text-lg text-gray-900 dark:text-white mb-4">
             Created by {currentCollection?.collectionOwner}
           </p>
+
           {currentCollection?.description && (
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
-              {currentCollection.description}
-            </p>
+            <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-4">
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
+                {currentCollection.description}
+              </p>
+              <PencilSquareIcon
+                onClick={() => setUpdateDescription(true)}
+                className="h-6 w-6"
+              />
+            </div>
           )}
 
-          <div className="mt-4 flex items-center gap-4">
+          <div className="mb-4 flex items-center gap-2">
             <span className="px-3 py-1 bg-red-100 dark:bg-red-800/40 text-red-800 dark:text-red-200 rounded-full text-sm">
               {currentCollection?.words.length} terms
             </span>
@@ -130,6 +202,17 @@ export const CollectionDetails = () => {
                 className="text-neutral-700 dark:text-white w-8 h-8 hover:text-neutral-900 dark:hover:text-neutral-300 transition cursor-pointer"
               />
             )}
+          </div>
+          <div className="space-x-4 flex justify-center">
+            <button className="text-white bg-red-900 border-b-2 border-transparent hover:border-b-2 hover:border-white py-2 px-6 rounded-lg cursor-pointer transition ">
+              Memory game
+            </button>
+            <button className="text-white bg-red-900 border-transparent  hover:border-white hover:border-b-2   py-2 px-6 rounded-lg cursor-pointer transition ">
+              Time game
+            </button>
+            <button className="text-white bg-red-900 border-transparent hover:border-b-2 hover:border-white box-border py-2 px-6 rounded-lg cursor-pointer transition ">
+              Learning
+            </button>
           </div>
         </div>
 
@@ -181,7 +264,7 @@ export const CollectionDetails = () => {
             </div>
 
             <form className="space-y-4">
-              <div>
+              <div className="relative">
                 <label
                   htmlFor="term"
                   className="mx-2 flex justify-between text-sm font-medium mb-1"
@@ -196,17 +279,24 @@ export const CollectionDetails = () => {
                   type="text"
                   id="term"
                   value={newTerm.term}
-                  onChange={(e) =>
-                    setNewTerm({ ...newTerm, term: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setNewTerm({ ...newTerm, term: e.target.value }),
+                      (e.target.style.height = "auto");
+                    e.target.style.height = e.target.scrollHeight + "px";
+                  }}
                   placeholder={`Enter term `}
                   className="w-full px-4 py-2 border border-red-600  rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none overflow-hidden"
                   rows="1"
-                  onInput={(e) => {
-                    e.target.style.height = "auto";
-                    e.target.style.height = e.target.scrollHeight + "px";
-                  }}
                 />
+                <button
+                  type="button"
+                  onClick={() => handleDefinitions(newTerm.term)}
+                  className="absolute right-2 bottom-4 p-1 rounded-full bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                >
+                  <MagnifyingGlassIcon
+                    className={`w-4 h-4 text-red-600 dark:text-red-400`}
+                  />
+                </button>
               </div>
 
               <div>
@@ -218,24 +308,33 @@ export const CollectionDetails = () => {
                     Definition
                   </p>
                   <p className="text-neutral-500 dark:text-neutral-400">
-                    {newTerm.definition.length}/200
+                    {newTerm.definition.length}/300
                   </p>
                 </label>
                 <textarea
-                  maxLength="200"
+                  maxLength="300"
                   id="definition"
+                  ref={definitionTextareaRef}
                   value={newTerm.definition}
-                  onChange={(e) =>
-                    setNewTerm({ ...newTerm, definition: e.target.value })
-                  }
-                  placeholder="Enter definition"
-                  rows="3"
-                  className="w-full px-4 py-2 border border-red-600  rounded-lg  text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none overflow-hidden"
-                  onInput={(e) => {
+                  onChange={(e) => {
+                    setNewTerm({ ...newTerm, definition: e.target.value });
+                    // Автоматически изменяем высоту при ручном вводе
                     e.target.style.height = "auto";
                     e.target.style.height = e.target.scrollHeight + "px";
                   }}
+                  placeholder="Enter definition"
+                  rows="3"
+                  className="w-full px-4 py-2 border border-red-600  rounded-lg  text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none overflow-hidden"
                 />
+                {definitions.length !== 0 && (
+                  <DefinitionsContainer
+                    definitions={definitions}
+                    onClick={(def) => {
+                      handleDefinitionClick(def);
+                    }}
+                    setDefinitions={() => setDefinitions([])}
+                  />
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
@@ -264,6 +363,101 @@ export const CollectionDetails = () => {
           setClose={() => setConfirm(false)}
           setConfirm={handleDeleteCollection}
         />
+      )}
+      {isUpdateTitle && (
+        <Modal
+          setClose={() => {
+            setUpdateTitle(false), setNewTitle("");
+          }}
+        >
+          <div className="mt-2">
+            <h3 className="text-xl text-center mb-2">Set new title</h3>
+
+            <label
+              htmlFor="title"
+              className="mx-2 flex justify-between text-sm font-medium mb-1"
+            >
+              <p className="text-neutral-700 dark:text-neutral-300">
+                New title
+              </p>
+              <p className="text-neutral-500 dark:text-neutral-400">
+                {newTitle.length}/50
+              </p>
+            </label>
+            <textarea
+              maxLength="50"
+              type="text"
+              id="title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder={`Enter term `}
+              className="w-full px-4 py-2 border border-red-600  rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none overflow-hidden"
+              rows="1"
+              onInput={(e) => {
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
+            />
+
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={handleChangeTitle}
+                className="px-4 py-2 bg-red-600 text-white rounded-3xl hover:bg-red-700 transition-colors cursor-pointer"
+              >
+                Change title
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {isUpdateDescription && (
+        <Modal
+          setClose={() => {
+            setUpdateDescription(false), setNewDescription("");
+          }}
+        >
+          <div className="mt-2">
+            <h3 className="text-xl text-center mb-2">Set new description</h3>
+
+            <label
+              htmlFor="title"
+              className="mx-2 flex justify-between text-sm font-medium mb-1"
+            >
+              <p className="text-neutral-700 dark:text-neutral-300">
+                New description
+              </p>
+              <p className="text-neutral-500 dark:text-neutral-400">
+                {newDescription.length}/300
+              </p>
+            </label>
+            <textarea
+              maxLength="300"
+              type="text"
+              id="title"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder={`Enter term `}
+              className="w-full px-4 py-2 border border-red-600  rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none overflow-hidden"
+              rows="1"
+              onInput={(e) => {
+                e.target.style.height = "auto";
+                e.target.style.height = e.target.scrollHeight + "px";
+              }}
+            />
+
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={handleChangeDesciption}
+                className="px-4 py-2 bg-red-600 text-white rounded-3xl hover:bg-red-700 transition-colors cursor-pointer"
+              >
+                Change description
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

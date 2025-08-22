@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
-export const ConfirmationModal = ({ title, setClose, setConfirm }) => {
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { useRef, useEffect } from "react";
+export const Modal = ({ children, setClose }) => {
   const modalRef = useRef();
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -8,6 +9,7 @@ export const ConfirmationModal = ({ title, setClose, setConfirm }) => {
         setClose();
       }
     };
+
     const handleEscape = (e) => {
       if (e.key === "Escape") setClose();
     };
@@ -30,23 +32,13 @@ export const ConfirmationModal = ({ title, setClose, setConfirm }) => {
     <div className="fixed inset-0 backdrop-blur-xs bg-opacity-20 flex items-center justify-center z-50 p-4 ">
       <div
         ref={modalRef}
-        className="bg-white dark:bg-black p-6 rounded-xl shadow-xl dark:shadow-none"
+        className="bg-white dark:bg-black p-6 rounded-xl shadow-xl dark:shadow-none relative max-w-md w-full dark:text-white"
       >
-        <h3 className="dark:text-white text-xl mb-4">{title}</h3>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={setClose}
-            className="px-4 py-2 bg-neutral-600 text-white rounded-xl hover:bg-neutral-700 transition-colors cursor-pointer"
-          >
-            No
-          </button>
-          <button
-            onClick={setConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors cursor-pointer"
-          >
-            Yes
-          </button>
-        </div>
+        <XMarkIcon
+          className="w-6 h-6 absolute top-4 right-4 cursor-pointer"
+          onClick={setClose}
+        />
+        {children}
       </div>
     </div>
   );

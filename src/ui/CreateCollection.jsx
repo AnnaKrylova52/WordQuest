@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   TrashIcon,
   ArrowLeftIcon,
@@ -8,10 +8,12 @@ import { nanoid } from "nanoid";
 import { useCollections } from "../store/useCollections";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import axios from "axios";
+import { DefinitionsContainer } from "./DefinitionsContainer";
+
 export const CreateCollection = () => {
   const navigate = useNavigate();
-  const { createCollection } = useCollections();
+  const [textareaRefs, setTextareaRefs] = useState({});
+  const { createCollection, fetchDefinitions } = useCollections();
   const [isPrivate, setPrivate] = useState(false);
   const { user, showNotification } = useAuth();
   const [definitions, setDefinitions] = useState([]);
@@ -26,32 +28,27 @@ export const CreateCollection = () => {
     ],
     firebaseId: "",
   });
-  const fetchDefinitions = async (cardId, term) => {
-    setActiveTermId(cardId);
-    try {
-      const response = await axios.get(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${term}`
-      );
+  const handleDefinitionClick = (cardId, def) => {
+    updateWord(cardId, "definition", def.definition);
+    setDefinitions([]);
+    setActiveTermId(null);
 
-      const data = await response.data;
-
-      const allDefinitions = [];
-      data.forEach((word) => {
-        word.meanings.forEach((meaning) => {
-          meaning.definitions.forEach((def) => {
-            allDefinitions.push({
-              definition: def.definition,
-            });
-          });
-        });
-      });
-
-      setDefinitions(allDefinitions);
-      console.log("translating");
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    // После установки значения, обновляем высоту текстового поля
+    setTimeout(() => {
+      if (textareaRefs[cardId]) {
+        textareaRefs[cardId].style.height = "auto";
+        textareaRefs[cardId].style.height =
+          textareaRefs[cardId].scrollHeight + "px";
+      }
+    }, 0);
   };
+
+  const handleDefinitions = async (cardId, term) => {
+    setActiveTermId(cardId);
+    const defs = await fetchDefinitions(term);
+    setDefinitions(defs);
+  };
+
   const handleCreate = async () => {
     try {
       const id = await createCollection(collection, user, isPrivate);
@@ -66,10 +63,12 @@ export const CreateCollection = () => {
     }
   };
   const addWord = () => {
+    const newId = nanoid();
     setCollection({
       ...collection,
       words: [...collection.words, { id: nanoid(), term: "", definition: "" }],
     });
+    setTextareaRefs((prev) => ({ ...prev, [newId]: null }));
   };
 
   const updateWord = (id, filed, value) => {
@@ -142,7 +141,7 @@ export const CreateCollection = () => {
             </div>
             <div>
               <textarea
-                maxLength="200"
+                maxLength="300"
                 id="description"
                 placeholder="Description"
                 rows="3"
@@ -191,18 +190,16 @@ export const CreateCollection = () => {
                           className="border border-red-600 rounded-lg mt-0.5 p-3 w-full focus:outline-none focus:ring-2 focus:ring-red-500 break-words resize-none overflow-hidden pr-10"
                           value={card.term}
                           rows="1"
-                          onChange={(e) =>
-                            updateWord(card.id, "term", e.target.value)
-                          }
-                          onInput={(e) => {
-                            e.target.style.height = "auto";
+                          onChange={(e) => {
+                            updateWord(card.id, "term", e.target.value),
+                              (e.target.style.height = "auto");
                             e.target.style.height =
                               e.target.scrollHeight + "px";
                           }}
                         />
                         <button
                           type="button"
-                          onClick={() => fetchDefinitions(card.id, card.term)}
+                          onClick={() => handleDefinitions(card.id, card.term)}
                           className="absolute right-2 bottom-1/3 p-1 rounded-full bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                         >
                           <MagnifyingGlassIcon
@@ -220,49 +217,31 @@ export const CreateCollection = () => {
                           Definition
                         </p>
                         <p className="text-neutral-500 dark:text-neutral-400">
-                          {card.definition.length}/200
+                          {card.definition.length}/300
                         </p>
                       </label>
                       <textarea
-                        maxLength="200"
+                        maxLength="300"
+                        ref={(el) => (textareaRefs[card.id] = el)}
                         id={`definition-${card.id}`}
                         placeholder="Enter definition"
                         rows="1"
-                        className="relative border border-red-600 rounded-lg mt-0.5 p-3 w-full focus:outline-none focus:ring-2 focus:ring-red-500 break-words resize-none overflow-hidden"
+                        className=" border border-red-600 rounded-lg mt-0.5 p-3 w-full focus:outline-none focus:ring-2 focus:ring-red-500 break-words resize-none overflow-hidden"
                         value={card.definition}
-                        onChange={(e) =>
-                          updateWord(card.id, "definition", e.target.value)
-                        }
-                        onInput={(e) => {
-                          e.target.style.height = "auto";
+                        onChange={(e) => {
+                          updateWord(card.id, "definition", e.target.value),
+                            (e.target.style.height = "auto");
                           e.target.style.height = e.target.scrollHeight + "px";
                         }}
                       />
                       {activeTermId === card.id && definitions.length > 0 && (
-                        <div className="mt-2 border border-gray-200 dark:border-neutral-700 rounded-lg p-3">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Suggested definitions:
-                          </p>
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {definitions.map((def, index) => (
-                              <div
-                                key={index}
-                                onClick={() => {
-                                  updateWord(
-                                    card.id,
-                                    "definition",
-                                    def.definition
-                                  );
-                                  setDefinitions([]);
-                                  setActiveTermId(null);
-                                }}
-                                className="p-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-black rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900/20 transition-colors"
-                              >
-                                {def.definition}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                        <DefinitionsContainer
+                          definitions={definitions}
+                          onClick={(def) => {
+                            handleDefinitionClick(card.id, def);
+                          }}
+                          setDefinitions={() => setDefinitions([])}
+                        />
                       )}
                     </div>
                   </div>
