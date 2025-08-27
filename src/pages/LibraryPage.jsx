@@ -1,35 +1,56 @@
 import { CollectionCard } from "../ui/CollectionCard";
 import { useCollections } from "../store/useCollections";
-import { useCallback, useEffect } from "react";
+import { useEffect, useState } from "react"; // Добавьте импорт useState
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { UserIcon, HeartIcon } from "@heroicons/react/24/outline";
+
 export const LibraryPage = () => {
-  const { userCollections, fetchSubscriptions } = useCollections();
-  const { user } = useAuth();
+  const { collections, fetchCollections, loading } = useCollections();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const loadSubscriptions = useCallback(async () => {
-    try {
-      await fetchSubscriptions(user.uid);
-    } catch (error) {
-      console.error("Failed to fetch subscriptions:", error);
-    }
-  }, [fetchSubscriptions, user]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    loadSubscriptions();
-  }, [loadSubscriptions]);
+    const loadData = async () => {
+      if (!user) return;
 
-  const createdCollections = userCollections.filter(
+      try {
+        await fetchCollections(user.uid);
+        setDataLoaded(true); 
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        setDataLoaded(true); 
+      }
+    };
+
+    loadData();
+  }, [fetchCollections, user]);
+
+  // Показываем индикатор загрузки, пока данные не загружены
+  if (authLoading || loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <p className="text-gray-600 dark:text-gray-300">
+            Loading collections...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const createdCollections = collections.filter(
     (col) => col.ownerId === user.uid
   );
-  const subscribedCollections = userCollections.filter(
-    (col) => col.ownerId !== user.uid
+  const subscribedCollections = collections.filter(
+    (col) => col.isSubscribed && col.ownerId !== user.uid
   );
 
   const openCreateCollection = () => {
     navigate("/create-collection");
   };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <div className="flex justify-between items-center">
@@ -44,7 +65,14 @@ export const LibraryPage = () => {
         </button>
       </div>
 
-      {userCollections.length === 0 ? (
+      {!dataLoaded ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600 dark:text-gray-300">
+            Loading collections...
+          </p>
+        </div>
+      ) : subscribedCollections.length === 0 &&
+        createdCollections.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-300">
             No collections in your library. Create your first collection!

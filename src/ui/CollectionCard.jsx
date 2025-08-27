@@ -4,33 +4,31 @@ import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useAuth } from "../hooks/useAuth";
 import { useCollections } from "../store/useCollections";
 export const CollectionCard = ({ collection }) => {
-  const {
-    subscribeToCollection,
-    unsubscribeFormCollection,
-    subscribedCollections,
-  } = useCollections();
+  const { subscribeToCollection, unsubscribeFromCollection } = useCollections();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const openDetails = (collection) => {
     navigate(`/collections/${collection.id}`, { state: { collection } });
   };
+
   const handleSubscribe = async (e, collectionId) => {
     e.stopPropagation();
     try {
-      const isCurrentlySubscribed =
-        subscribedCollections.includes(collectionId);
-      if (isCurrentlySubscribed) {
-        await unsubscribeFormCollection(collectionId, user.uid);
-        console.log(isCurrentlySubscribed);
+      if (collection.isSubscribed) {
+        await unsubscribeFromCollection(collectionId, user.uid);
       } else {
         await subscribeToCollection(collectionId, user.uid);
-        console.log(isCurrentlySubscribed);
       }
-
     } catch (error) {
       console.error("Subscription error:", error);
     }
   };
+  if (authLoading) {
+    return (
+      <div className="border rounded-xl overflow-hidden shadow-md bg-white dark:bg-black animate-pulse h-64"></div>
+    );
+  }
+
   return (
     <div
       onClick={() => openDetails(collection)}
@@ -44,12 +42,12 @@ export const CollectionCard = ({ collection }) => {
               `}
     >
       <div className="flex justify-end mt-2 mr-2">
-        {user.uid !== collection.ownerId ? (
+        {user && user.uid !== collection.ownerId ? (
           <button
             onClick={(e) => handleSubscribe(e, collection.id)}
             className="cursor-pointer"
           >
-            {subscribedCollections.includes(collection.id) ? (
+            {collection.isSubscribed ? (
               <StarIconSolid className="h-6 w-6 text-red-600" />
             ) : (
               <StarIcon className="h-6 w-6" />

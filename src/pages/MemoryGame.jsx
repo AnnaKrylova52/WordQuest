@@ -1,11 +1,488 @@
-import { useEffect } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { useCollections } from "../store/useCollections";
-
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import {  useParams } from "react-router-dom";
+import { useUserData } from "../store/useUserData";
+import { useAuth } from "../hooks/useAuth";
+import { BackButton } from "../ui/BackButton";
 export const MemoryGame = () => {
-  const { userCollections } = useCollections();
-  const words = userCollections.map((col) => col.words.term);
-  useEffect(() => {
-    console.log(words);
+  const { currentCollection, fetchCollection } = useCollections();
+  const [fieldSize, setFieldSize] = useState(4);
+  const [cards, setCards] = useState([]);
+  const [openCards, setOpenCards] = useState([]);
+  const [matchedCards, setMatchedCards] = useState([]);
+  const [mismatchedCards, setMismatchedCards] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [moves, setMoves] = useState(0);
+  const [gameHistory, setGameHistory] = useState(() => {
+    const saved = localStorage.getItem("memoryGameHistory");
+    return saved ? JSON.parse(saved) : [];
   });
-  return <div></div>;
+  const { id } = useParams();
+  const { user } = useAuth();
+  const { uploadMemoryGameResults } = useUserData();
+  const loadCollection = useCallback(async () => {
+    try {
+      await fetchCollection(id);
+    } catch (error) {
+      console.error("Failed to fetch collection:", error);
+    }
+  }, [fetchCollection, id]);
+
+  useEffect(() => {
+    loadCollection();
+  }, [loadCollection]);
+
+  useEffect(() => {
+    initializeGame();
+  }, [fieldSize]);
+
+  useEffect(() => {
+    const result = async () => {
+      if (
+        matchedCards.length !== 0 &&
+        matchedCards.length === cards.length / 2
+      ) {
+        const gameResult = {
+          date: new Date().toLocaleString(),
+          moves: moves,
+          fieldSize: fieldSize,
+          collection: currentCollection?.title,
+        };
+        const history = [gameResult, ...gameHistory].slice(0, 10);
+        setGameHistory(history);
+        try {
+          await uploadMemoryGameResults(user.uid, moves, fieldSize);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    };
+    result();
+  }, [matchedCards]);
+
+  useEffect(() => {
+    localStorage.setItem("memoryGameHistory", JSON.stringify(gameHistory));
+  }, [gameHistory]);
+
+  const clearHistory = () => {
+    setGameHistory([]);
+    localStorage.removeItem("memoryGameHistory");
+  };
+
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const randomIndex = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[randomIndex]] = [
+        shuffled[randomIndex],
+        shuffled[i],
+      ];
+    }
+    return shuffled;
+  };
+
+  const initializeGame = () => {
+    setMoves(0);
+    const words = currentCollection?.words || [];
+    const totalPairs = (fieldSize * fieldSize) / 2;
+    const selectedWords = shuffleArray([...words]).slice(0, totalPairs);
+
+    const cards = selectedWords.flatMap((word) => [
+      { id: word.id, value: word.term },
+      { id: word.id, value: word.definition },
+    ]);
+
+    const shuffledCards = shuffleArray(cards);
+    setCards(shuffledCards);
+    setOpenCards([]);
+    setMatchedCards([]);
+    setMismatchedCards([]);
+  };
+
+  const handleClick = (index) => {
+    if (openCards.includes(index) || matchedCards.includes(cards[index].id)) {
+      return;
+    }
+    if (openCards.length === 2) {
+      return;
+    }
+
+    const newOpenCards = [...openCards, index];
+    setOpenCards(newOpenCards);
+    setMoves((prev) => prev + 1);
+
+    if (newOpenCards.length === 2) {
+      if (cards[newOpenCards[0]].id === cards[newOpenCards[1]].id) {
+        setMatchedCards([...matchedCards, cards[newOpenCards[0]].id]);
+        setOpenCards([]);
+      } else {
+        setMismatchedCards([...newOpenCards]);
+        setTimeout(() => {
+          setOpenCards([]);
+        }, 1000);
+      }
+    }
+  };
+
+  return (
+    <div className="pt-6 pb-2">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="sm:flex justify-between items-center sm:mb-6">
+          <BackButton />
+
+          <div className="flex flex-col items-end">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="px-4 py-2 bg-red-600 text-white rounded-3xl hover:bg-red-700 cursor-pointer transition-colors mb-2"
+            >
+              {showHistory ? "Hide Game History" : "Show Game History"}
+            </button>
+
+            {showHistory && (
+              <div className="w-80  p-4 rounded-lg shadow-lg">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold dark:text-white">
+                    Recent Games
+                  </h2>
+                  {gameHistory.length > 0 && (
+                    <button
+                      onClick={clearHistory}
+                      className="text-red-500 hover:text-red-700 text-sm cursor-pointer"
+                    >
+                      Clear History
+                    </button>
+                  )}
+                </div>
+                {gameHistory.length === 0 ? (
+                  <p className="dark:text-gray-300">No games played yet.</p>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {gameHistory.map((game, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-2 border dark:border-white rounded-xl gap-4"
+                      >
+                        <div>
+                          <p className="font-medium dark:text-white">
+                            {game.collection}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-300">
+                            {game.date} • {game.fieldSize}x{game.fieldSize}
+                          </p>
+                        </div>
+                        <span className="font-bold text-red-600 dark:text-red-500">
+                          {game.moves} moves
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <h1 className="dark:text-white text-3xl sm:text-4xl text-center mb-2 font-bold text-gray-800 ">
+            Memory Game
+          </h1>
+          <p className="text-center text-gray-600 dark:text-gray-300 mb-4">
+            Match terms with their definitions
+          </p>
+          <div className="flex justify-center items-center gap-4 mb-2 text-white">
+            <p className="text-black dark:text-white">Field size:</p>
+            <button
+              className={` py-1 px-3 rounded-3xl cursor-pointer transition ${
+                fieldSize === 4
+                  ? "bg-red-700"
+                  : "bg-neutral-400  hover:bg-neutral-300 dark:bg-neutral-700 hover:dark:bg-neutral-800"
+              }`}
+              onClick={() => setFieldSize(4)}
+            >
+              4x4
+            </button>
+
+            {currentCollection?.words.length >= 18 && (
+              <button
+                className={` py-1 px-3 rounded-3xl cursor-pointer transition ${
+                  fieldSize === 6
+                    ? " bg-red-700 "
+                    : "bg-neutral-400  hover:bg-neutral-300 dark:bg-neutral-700 hover:dark:bg-neutral-800"
+                }`}
+                onClick={() => setFieldSize(6)}
+              >
+                6x6
+              </button>
+            )}
+            {currentCollection?.words.length >= 32 && (
+              <button
+                className={` py-1 px-3 rounded-3xl cursor-pointer transition ${
+                  fieldSize === 8
+                    ? " bg-red-700 "
+                    : "bg-neutral-400  hover:bg-neutral-300 dark:bg-neutral-700 hover:dark:bg-neutral-800"
+                }`}
+                onClick={() => setFieldSize(8)}
+              >
+                8x8
+              </button>
+            )}
+          </div>
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <button
+              onClick={initializeGame}
+              className="flex items-center gap-2 px-4 py-2 bg-neutral-400 dark:bg-neutral-700 text-white rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors duration-300 group"
+            >
+              <ArrowPathIcon className="h-5 w-5 transition-transform group-hover:rotate-180" />
+              <span>Reset Game</span>
+            </button>
+            <p className="text-gray-700 dark:text-white    font-medium">
+              Moves:
+              <span className="text-red-600 dark:text-red-400"> {moves}</span>
+            </p>
+          </div>
+          {matchedCards.length !== 0 &&
+            matchedCards.length === cards.length / 2 && (
+              <div className="mt-4 p-4  bg-green-800/60 rounded-xl mb-4 flex items-center gap-2">
+                <p className="dark:text-white font-bold">
+                  Congratulations! You've completed the game in {moves} moves.
+                </p>
+                <button
+                  onClick={initializeGame}
+                  className="dark:text-white relative group cursor-pointer flex items-center gap-1"
+                >
+                  Play again
+                  <ArrowPathIcon className="h-6 w-6  " />
+                </button>
+              </div>
+            )}
+
+          <div
+            className={`
+  grid gap-4 
+  grid-cols-3 
+ ${
+   fieldSize === 4
+     ? "md:grid-cols-4"
+     : fieldSize === 6
+     ? "md:grid-cols-6"
+     : "md:grid-cols-3"
+ }
+`}
+          >
+            {cards.map((card, index) => (
+              <div
+                key={index}
+                onClick={() => handleClick(index)}
+                className={`border-2 dark:text-white text-sm  bg-white dark:bg-black rounded-lg h-50 md:h-60 flex items-center justify-center p-6 relative cursor-pointer transition-transform duration-500 preserve-3d ${
+                  openCards.includes(index) || matchedCards.includes(card.id)
+                    ? "rotate-y-180 pointer-events-none"
+                    : ""
+                } ${
+                  matchedCards.includes(card.id)
+                    ? "border-green-600"
+                    : mismatchedCards.includes(index) &&
+                      openCards.includes(index)
+                    ? "border-red-600"
+                    : "border-red"
+                }`}
+                style={{ perspective: "1000px" }}
+              >
+                {/* Лицевая сторона (рубашка) */}
+                <div className="absolute inset-0 w-full h-full bg-white dark:bg-black dark:border-gray-800 rounded-lg flex items-center justify-center backface-hidden">
+                  <div className="text-center p-2">
+                    <svg
+                      version="1.0"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="dark:fill-white fill-black  h-9 md:h-12"
+                      viewBox="0 0 603.000000 228.000000"
+                      preserveAspectRatio="xMidYMid meet"
+                    >
+                      <g
+                        transform="translate(0.000000,228.000000) scale(0.100000,-0.100000)"
+                        stroke="none"
+                      >
+                        <path
+                          d="M2145 2235 c-44 -13 -101 -33 -128 -44 -58 -25 -163 -95 -176 -118
+                   -8 -16 -12 -16 -52 3 -34 15 -65 19 -144 18 -55 0 -120 -6 -145 -13 -139 -39
+                   -150 -43 -150 -59 0 -9 -23 -55 -50 -101 -34 -59 -47 -89 -41 -100 27 -50 165
+                   -361 197 -443 31 -79 42 -98 59 -98 34 0 364 49 475 70 58 12 118 28 133 36
+                   30 17 451 158 504 169 18 3 35 11 39 16 3 5 -21 51 -53 102 -62 96 -140 228
+                   -240 407 -44 78 -65 106 -81 108 -12 2 -29 16 -37 32 -8 16 -18 31 -22 33 -5
+                   3 -44 -6 -88 -18z m133 -150 c120 -207 185 -335 170 -339 -159 -47 -263 -101
+                   -329 -169 -21 -22 -40 -39 -42 -36 -2 2 -16 36 -32 74 -16 39 -64 144 -107
+                   234 -49 101 -76 171 -73 182 12 37 122 105 235 145 103 36 104 35 178 -91z
+                   m-557 -35 c29 -6 63 -20 75 -31 17 -16 224 -442 224 -461 0 -2 -39 -2 -87 0
+                   -51 2 -132 -3 -192 -12 -58 -9 -108 -13 -113 -8 -8 8 -123 255 -183 394 -39
+                   90 -41 87 60 106 124 24 146 25 216 12z m-248 -350 c94 -212 121 -290 100
+                   -290 -4 0 -27 44 -50 98 -164 381 -173 406 -167 426 5 16 8 17 12 6 3 -8 50
+                   -116 105 -240z m-8 -147 c36 -83 65 -159 65 -167 0 -40 -21 -18 -53 57 -19 45
+                   -65 151 -102 235 -44 100 -65 158 -60 170 9 20 44 -51 150 -295z m1069 158 c3
+                   -4 -31 -21 -77 -36 -105 -35 -215 -85 -273 -125 -54 -36 -71 -34 -22 3 57 44
+                   180 105 273 136 106 36 93 33 99 22z m29 -50 c-4 -4 -39 -15 -78 -25 -38 -9
+                   -121 -39 -182 -65 -62 -27 -113 -47 -113 -45 0 2 28 19 63 38 100 56 359 137
+                   310 97z m37 -60 c0 -5 -87 -37 -192 -71 -106 -34 -214 -73 -240 -87 -49 -27
+                   -49 -27 -163 -3 -53 12 -176 6 -327 -14 -79 -11 -87 -11 -74 3 10 9 55 19 123
+                   27 162 19 242 17 317 -7 l65 -22 47 32 c108 71 444 179 444 142z m-843 -87
+                   c-3 -3 -12 -4 -19 -1 -8 3 -5 6 6 6 11 1 17 -2 13 -5z m-44 -11 c-7 -2 -19 -2
+                   -25 0 -7 3 -2 5 12 5 14 0 19 -2 13 -5z m177 3 c0 -2 -11 -6 -25 -8 -13 -3
+                   -22 -1 -19 3 5 9 44 13 44 5z m148 -11 c12 -11 -5 -10 -38 2 l-35 14 34 -6
+                   c19 -3 37 -7 39 -10z m-371 -1 c-3 -3 -12 -4 -19 -1 -8 3 -5 6 6 6 11 1 17 -2
+                   13 -5z m358 -95 c-11 -5 -126 -24 -255 -43 -173 -25 -237 -31 -242 -23 -10 16
+                   36 31 137 46 174 27 400 39 360 20z"
+                        />
+                        <path
+                          d="M2103 2055 c-58 -26 -147 -84 -140 -91 5 -5 217 105 217 112 0 9 -28
+                   2 -77 -21z"
+                        />
+                        <path
+                          d="M2124 1995 c-95 -48 -131 -72 -122 -80 3 -3 37 13 76 35 38 22 91 48
+                   116 56 50 17 69 34 38 34 -11 0 -60 -20 -108 -45z"
+                        />
+                        <path
+                          d="M2143 1896 c-75 -37 -120 -66 -100 -66 9 0 217 102 217 106 0 12 -35
+                   0 -117 -40z"
+                        />
+                        <path
+                          d="M2204 1830 c-86 -44 -121 -67 -112 -75 3 -3 50 17 104 45 54 27 105
+                   50 112 50 6 0 12 5 12 10 0 19 -39 10 -116 -30z"
+                        />
+                        <path
+                          d="M1631 1939 c-59 -7 -92 -21 -80 -34 3 -2 23 0 44 6 22 6 82 9 133 7
+                   79 -3 91 -2 76 9 -10 7 -32 13 -50 13 -18 0 -38 2 -46 4 -7 2 -42 0 -77 -5z"
+                        />
+                        <path
+                          d="M1662 1820 c-52 -8 -70 -15 -61 -25 3 -2 36 0 73 6 48 8 86 8 129 0
+                   56 -10 78 -9 65 4 -7 7 -107 25 -132 24 -11 -1 -45 -5 -74 -9z"
+                        />
+                        <path
+                          d="M1693 1719 c-54 -13 -58 -33 -5 -22 20 4 75 7 121 6 52 0 80 2 74 8
+                   -15 15 -142 20 -190 8z"
+                        />
+                        <path
+                          d="M2741 1428 c-13 -7 -29 -21 -35 -31 -9 -16 -7 -22 14 -35 66 -45 75
+                   -58 74 -109 -1 -26 -7 -67 -13 -89 l-11 -42 -38 20 c-30 16 -51 19 -112 15
+                   -163 -9 -271 -114 -287 -280 -19 -209 152 -307 320 -183 l27 20 15 -21 c20
+                   -29 76 -53 124 -53 56 0 108 23 154 68 49 47 73 132 37 132 -4 0 -24 -23 -44
+                   -51 -35 -48 -39 -50 -79 -47 -40 3 -42 5 -45 38 -3 37 23 141 83 335 30 100
+                   36 131 33 188 -3 60 -7 71 -36 99 -27 28 -39 32 -94 35 -39 3 -72 -1 -87 -9z
+                   m-32 -366 c20 -22 23 -33 19 -81 -5 -67 -60 -193 -96 -222 -25 -19 -87 -26
+                   -108 -11 -60 40 -36 232 37 308 49 50 105 52 148 6z"
+                        />
+                        <path
+                          d="M3420 1410 c-132 -28 -245 -121 -312 -257 -39 -78 -42 -90 -46 -187
+                   -6 -127 11 -185 66 -238 46 -44 67 -55 131 -69 40 -8 68 -25 128 -76 43 -35
+                   96 -74 117 -85 55 -28 141 -34 202 -14 58 19 124 70 124 96 0 35 -23 41 -89
+                   24 -74 -18 -121 -13 -203 23 -56 25 -74 43 -43 43 8 0 39 9 70 21 180 67 305
+                   358 238 554 -21 63 -85 127 -149 149 -60 21 -173 28 -234 16z m177 -100 c63
+                   -38 86 -134 60 -257 -41 -191 -155 -313 -295 -315 -71 -1 -94 11 -116 57 -40
+                   84 -25 222 39 352 73 148 215 223 312 163z"
+                        />
+                        <path
+                          d="M185 1393 c-119 -26 -175 -73 -183 -152 -4 -48 -3 -53 34 -90 29 -29
+                   52 -41 93 -50 30 -6 56 -9 59 -6 3 3 0 16 -6 30 -26 56 -5 137 41 168 25 16
+                   107 35 107 24 0 -3 -10 -22 -22 -42 -20 -35 -21 -43 -12 -178 11 -185 11 -395
+                   0 -429 l-8 -28 94 0 95 0 91 153 c49 83 110 188 134 232 l43 80 3 -55 c4 -60
+                   -15 -351 -24 -387 -6 -23 -5 -23 80 -23 l85 0 182 273 c194 290 246 359 303
+                   398 20 13 36 26 36 29 0 3 -15 15 -34 28 -28 19 -51 24 -150 29 -103 5 -116 4
+                   -116 -10 0 -9 18 -28 40 -42 59 -37 55 -59 -41 -211 -45 -71 -107 -169 -137
+                   -219 -31 -49 -60 -94 -65 -100 -6 -6 -7 23 -4 80 5 84 -8 433 -19 483 -3 15
+                   -12 22 -29 22 -28 0 -59 -48 -256 -392 l-124 -216 -6 56 c-4 31 -7 138 -8 238
+                   -1 205 -2 203 89 242 25 11 56 31 69 46 l24 26 -219 -1 c-120 -1 -228 -3 -239
+                   -6z"
+                        />
+                        <path
+                          d="M5780 1339 c-25 -99 -31 -109 -76 -135 -43 -25 -94 -77 -94 -95 0 -5
+                   13 -9 29 -9 17 0 33 -4 36 -10 3 -5 -14 -73 -39 -149 -25 -77 -46 -152 -46
+                   -168 0 -142 231 -190 325 -68 22 29 24 37 14 59 l-12 25 -32 -25 c-70 -53
+                   -135 -50 -135 5 0 32 77 289 92 309 6 7 34 12 69 12 64 0 73 7 64 50 -7 30 -7
+                   30 -61 24 -30 -4 -54 -5 -54 -2 0 3 9 31 20 63 11 32 20 66 20 76 0 28 -42 68
+                   -77 75 -30 6 -32 5 -43 -37z"
+                        />
+                        <path
+                          d="M1410 1163 c-68 -24 -164 -124 -184 -193 -47 -159 14 -295 148 -331
+                   95 -26 220 13 290 91 60 67 86 132 86 218 0 107 -44 180 -132 216 -47 20 -149
+                   19 -208 -1z m170 -105 c27 -29 34 -58 28 -118 -16 -160 -166 -251 -231 -140
+                   -36 61 -6 204 54 255 41 34 118 36 149 3z"
+                        />
+                        <path
+                          d="M3944 1169 c-12 -6 -26 -21 -32 -34 -10 -21 -8 -25 19 -34 37 -13 37
+                   -28 -2 -167 -37 -129 -40 -184 -12 -222 63 -86 223 -81 297 9 16 19 25 29 22
+                   22 -11 -20 21 -69 54 -83 47 -20 132 -8 179 24 22 15 42 35 46 44 9 23 -9 36
+                   -33 23 -30 -16 -78 -13 -93 5 -11 13 -7 33 24 125 44 129 53 184 35 219 -18
+                   34 -75 70 -110 70 -61 0 -90 -41 -48 -68 26 -16 25 -40 -4 -134 -30 -94 -71
+                   -172 -109 -204 -33 -28 -54 -30 -84 -9 -36 25 -37 63 -4 181 38 133 39 174 8
+                   210 -19 22 -34 28 -78 30 -30 2 -64 -1 -75 -7z"
+                        />
+                        <path
+                          d="M1906 1160 c-68 -21 -89 -71 -28 -67 l37 2 -1 -40 c0 -22 -17 -94
+                   -38 -160 -43 -135 -50 -205 -24 -231 10 -10 38 -19 70 -22 l53 -4 22 104 c31
+                   141 73 223 136 262 46 28 51 29 100 19 61 -13 90 -1 101 42 13 53 -46 101 -93
+                   76 -11 -6 -50 -34 -87 -62 -36 -27 -68 -48 -70 -47 -1 2 2 23 8 47 10 38 9 45
+                   -10 64 -17 16 -36 22 -84 24 -35 1 -76 -2 -92 -7z"
+                        />
+                        <path
+                          d="M4773 1156 c-101 -32 -172 -102 -202 -201 -25 -80 -26 -96 -6 -162
+                   18 -59 71 -114 130 -133 61 -20 174 -8 228 23 48 29 69 63 46 78 -20 13 -36
+                   11 -71 -7 -17 -9 -53 -16 -80 -16 -58 0 -93 26 -102 77 -11 55 -3 62 82 68 99
+                   8 166 31 207 73 43 43 52 83 28 132 -35 72 -150 102 -260 68z m125 -95 c7 -46
+                   -7 -72 -51 -91 -39 -18 -107 -27 -107 -15 0 16 36 74 64 103 24 25 38 32 61
+                   30 23 -2 31 -9 33 -27z"
+                        />
+                        <path
+                          d="M5252 1155 c-49 -15 -78 -38 -98 -77 -34 -66 2 -143 99 -212 79 -56
+                   97 -85 74 -120 -33 -49 -111 -42 -123 12 -4 15 -13 37 -20 50 -31 48 -124 12
+                   -124 -47 0 -32 58 -87 105 -100 57 -16 154 -14 208 5 82 28 126 108 93 172 -9
+                   17 -48 57 -88 89 -87 71 -107 103 -84 138 36 55 102 35 108 -32 3 -36 5 -38
+                   41 -41 48 -4 74 17 83 65 5 27 2 39 -17 59 -45 48 -168 67 -257 39z"
+                        />
+                        <path
+                          d="M3015 411 c-47 -12 -90 -38 -117 -70 l-25 -29 -1049 -6 c-1025 -6
+                   -1251 -11 -1209 -30 24 -10 1006 -24 1726 -25 l507 -1 4 -54 c6 -71 44 -127
+                   107 -158 135 -65 291 25 291 169 l0 51 643 -5 c594 -5 1392 8 1522 25 l50 6
+                   -65 8 c-36 4 -539 10 -1118 14 l-1053 7 -22 29 c-42 57 -123 86 -192 69z m110
+                   -73 c29 -13 60 -59 69 -104 9 -39 -11 -90 -49 -124 -23 -22 -36 -25 -95 -25
+                   -62 0 -71 3 -100 30 -41 39 -55 93 -36 139 8 19 12 37 9 40 -10 9 18 35 31 30
+                   7 -3 19 2 26 11 15 18 107 21 145 3z"
+                        />
+                        <path
+                          d="M3100 228 c0 -37 -15 -43 -34 -13 -21 33 -26 32 -55 -10 -27 -40 -22
+                   -54 13 -36 18 10 29 10 45 2 38 -21 68 18 45 59 l-13 25 -1 -27z"
+                        />
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Обратная сторона (содержимое) */}
+                <div
+                  className={`
+          absolute inset-0 w-full h-full bg-white dark:bg-black 
+          rounded-lg flex items-center justify-center p-2 sm:p-6 
+          backface-hidden rotate-y-180
+        `}
+                >
+                  <div className="w-full max-w-full text-xs sm:text-base text-center break-words overflow-hidden line-clamp-8">
+                    {card.value}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <style>{`
+        .rotate-y-180 {
+          transform: rotateY(180deg);
+        }
+
+        .backface-hidden {
+          backface-visibility: hidden;
+        }
+
+        .preserve-3d {
+          transform-style: preserve-3d;
+        }
+      `}</style>
+    </div>
+  );
 };

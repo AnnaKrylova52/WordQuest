@@ -9,6 +9,7 @@ import { CreateCollection } from "../ui/CreateCollection";
 import { CollectionDetails } from "../ui/CollectionDetails";
 import { LibraryPage } from "../pages/LibraryPage";
 import { MemoryGame } from "../pages/MemoryGame";
+import { TimeGame } from "../pages/TimeGame";
 
 export const AppRouter = () => {
   const ProtectedRoute = () => {
@@ -36,6 +37,7 @@ export const AppRouter = () => {
           <Route path="/create-collection" element={<CreateCollection />} />
           <Route path="/user/collections" element={<LibraryPage />} />
           <Route path="/:id/memory-game" element={<MemoryGame />} />
+          <Route path="/:id/time-game" element={<TimeGame />} />
         </Route>
       </Route>
 

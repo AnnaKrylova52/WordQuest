@@ -1,7 +1,9 @@
 import { useRef, useEffect, useState } from "react";
-import { useParams, useNavigate, useAsyncError } from "react-router-dom";
+import { useParams, useNavigate, useAsyncError, Link } from "react-router-dom";
+import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import {
-  ArrowLeftIcon,
+  StarIcon,
+  UserCircleIcon,
   TrashIcon,
   PlusCircleIcon,
   XMarkIcon,
@@ -15,6 +17,7 @@ import { nanoid } from "nanoid";
 import { ConfirmationModal } from "./confirmationModal";
 import { DefinitionsContainer } from "./DefinitionsContainer";
 import { Modal } from "./Modal";
+import { BackButton } from "./BackButton";
 export const CollectionDetails = () => {
   const navigate = useNavigate();
   const {
@@ -28,6 +31,9 @@ export const CollectionDetails = () => {
     fetchDefinitions,
     updateDescription,
     updateTitle,
+    subscribeToCollection,
+    unsubscribeFromCollection,
+    updatePrivacy,
   } = useCollections();
   const definitionTextareaRef = useRef(null);
   const { isAdmin, user, showNotification } = useAuth();
@@ -37,6 +43,7 @@ export const CollectionDetails = () => {
   const [isUpdateDescription, setUpdateDescription] = useState(false);
   const [isConfirm, setConfirm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [isPrivate, setPrivate] = useState(currentCollection?.isPrivate);
   const [newDescription, setNewDescription] = useState("");
   const [definitions, setDefinitions] = useState([]);
   const [newTerm, setNewTerm] = useState({ term: "", definition: "", id: "" });
@@ -44,9 +51,9 @@ export const CollectionDetails = () => {
 
   useEffect(() => {
     if (id) {
-      fetchCollection(id);
+      fetchCollection(id, user.uid);
     }
-  }, [id, fetchCollection]);
+  }, [id, fetchCollection, user]);
 
   const handleEditTerm = (term) => {
     setUpdateTerm(true);
@@ -142,18 +149,46 @@ export const CollectionDetails = () => {
       console.error("Error changing title: ", error);
     }
   };
+  const handleSubscribe = async (e) => {
+    e.stopPropagation();
+    try {
+      if (currentCollection?.isSubscribed) {
+        await unsubscribeFromCollection(id, user.uid);
+      } else {
+        await subscribeToCollection(id, user.uid);
+      }
+    } catch (error) {
+      console.error("Subscription error:", error);
+    }
+  };
+  const handleMemoryGameClick = () => {
+    if (currentCollection.words.length < 8) {
+      showNotification("error", "Collection must contain at least 8 words!");
+      return;
+    }
+    navigate(`/${id}/memory-game`);
+  };
+
+  const handlePrivacyChange = async (e) => {
+    const newPrivacy = e.target.checked;
+    try {
+      await updatePrivacy(newPrivacy, currentCollection.id);
+      showNotification(
+        "success",
+        `Collection is now ${newPrivacy ? "private" : "public"}`
+      );
+    } catch (error) {
+      console.error("Error updating privacy: ", error);
+      showNotification("error", "Failed to update privacy setting");
+    }
+  };
+
   if (loading) return <Loader />;
 
   return (
     <div className=" py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 mb-6 text-red-600 dark:text-red-600 hover:text-red-800 dark:hover:text-red-500 transition-colors cursor-pointer"
-        >
-          <ArrowLeftIcon className="w-5 h-5" />
-          <span>Back to collections</span>
-        </button>
+        <BackButton />
 
         <div className="mb-8">
           <div className="flex justify-between items-center">
@@ -161,33 +196,78 @@ export const CollectionDetails = () => {
               <h1 className="text-3xl md:text-4xl font-bold ">
                 {currentCollection?.title}
               </h1>
-              <PencilSquareIcon
-                onClick={() => setUpdateTitle(true)}
-                className="w-6 h-6"
-              />
+              {(user.uid === currentCollection?.ownerId || isAdmin) && (
+                <PencilSquareIcon
+                  onClick={() => setUpdateTitle(true)}
+                  className="w-6 h-6 cursor-pointer"
+                />
+              )}
             </div>
-            {(user.uid === currentCollection?.ownerId || isAdmin) && (
-              <button
-                onClick={() => setConfirm(true)}
-                className="text-white bg-red-600 hover:bg-red-700  py-2 px-4 rounded-3xl cursor-pointer transition "
-              >
-                Delete
-              </button>
-            )}
+
+            <div className="flex items-center gap-2 dark:text-white">
+              {user.uid !== currentCollection?.ownerId ? (
+                <button
+                  className="cursor-pointer"
+                  onClick={(e) => handleSubscribe(e)}
+                >
+                  {currentCollection?.isSubscribed ? (
+                    <StarIconSolid className="h-8 w-8 text-red-600" />
+                  ) : (
+                    <StarIcon className="h-8 w-8 " />
+                  )}
+                </button>
+              ) : (
+                <UserCircleIcon className="h-8 w-8 " />
+              )}
+              {(user.uid === currentCollection?.ownerId || isAdmin) && (
+                <div className="flex items-center gap-2">
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={currentCollection?.isPrivate || false}
+                      onChange={handlePrivacyChange}
+                      className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-700 dark:peer-focus:ring-red-700 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-red-600 dark:peer-checked:bg-red-600"></div>
+                    <span className="ml-1 text-sm font-medium text-gray-900 dark:text-gray-300">
+                      Private
+                    </span>
+                  </label>
+                  <button
+                    onClick={() => setConfirm(true)}
+                    className="text-white bg-red-600 hover:bg-red-700  py-2 px-4 rounded-3xl cursor-pointer transition "
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <p className="text-lg text-gray-900 dark:text-white mb-4">
             Created by {currentCollection?.collectionOwner}
           </p>
 
-          {currentCollection?.description && (
+          {currentCollection?.description ? (
             <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-4">
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
                 {currentCollection.description}
               </p>
+              {(user.uid === currentCollection?.ownerId || isAdmin) && (
+                <PencilSquareIcon
+                  onClick={() => setUpdateDescription(true)}
+                  className="h-6 w-6 cursor-pointer"
+                />
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-4">
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
+                No description
+              </p>
               <PencilSquareIcon
                 onClick={() => setUpdateDescription(true)}
-                className="h-6 w-6"
+                className="h-6 w-6 cursor-pointer"
               />
             </div>
           )}
@@ -204,13 +284,19 @@ export const CollectionDetails = () => {
             )}
           </div>
           <div className="space-x-4 flex justify-center">
-            <button className="text-white bg-red-900 border-b-2 border-transparent hover:border-b-2 hover:border-white py-2 px-6 rounded-lg cursor-pointer transition ">
+            <button
+              onClick={handleMemoryGameClick}
+              className="text-white bg-red-800 border-b-3 border-transparent hover:border-b-3 hover:border-red-600 hover:dark:border-white py-2 px-6 rounded-lg cursor-pointer transition "
+            >
               Memory game
             </button>
-            <button className="text-white bg-red-900 border-transparent  hover:border-white hover:border-b-2   py-2 px-6 rounded-lg cursor-pointer transition ">
+            <button
+              onClick={() => navigate(`/${id}/time-game`)}
+              className="text-white bg-red-800 border-transparent border-b-3 hover:border-red-600 hover:dark:border-white hover:border-b-3   py-2 px-6 rounded-lg cursor-pointer transition "
+            >
               Time game
             </button>
-            <button className="text-white bg-red-900 border-transparent hover:border-b-2 hover:border-white box-border py-2 px-6 rounded-lg cursor-pointer transition ">
+            <button className="text-white bg-red-800 border-transparent border-b-3 hover:border-b-3 hover:border-red-600 hover:dark:border-white box-border py-2 px-6 rounded-lg cursor-pointer transition ">
               Learning
             </button>
           </div>
@@ -294,7 +380,7 @@ export const CollectionDetails = () => {
                   className="absolute right-2 bottom-4 p-1 rounded-full bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                 >
                   <MagnifyingGlassIcon
-                    className={`w-4 h-4 text-red-600 dark:text-red-400`}
+                    className={`w-4 h-4 text-red-600 dark:text-red-400 cursor-pointer`}
                   />
                 </button>
               </div>

@@ -18,7 +18,7 @@ export const SignIn = () => {
     isRemember: false,
   });
   const [isPasswordSeen, setSeePassword] = useState(false);
-  const { login, regWithGoogle, loading } = useAuth();
+  const { login, regWithGoogle, loading, showNotification } = useAuth();
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   // Обработчик изменения полей формы
   const handleChange = (event) => {
@@ -32,8 +32,9 @@ export const SignIn = () => {
   const handleGoogleLogin = async () => {
     try {
       await regWithGoogle();
+      showNotification("success", "You successfully loged in to your account!");
     } catch (error) {
-      setError(error.message || "Google registration failed");
+      shownotification("error", "Error log in to your account!");
       console.error(error);
     }
   };

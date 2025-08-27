@@ -4,33 +4,19 @@ import { useNavigate } from "react-router-dom";
 import { CollectionCard } from "../ui/CollectionCard";
 import { useAuth } from "../hooks/useAuth";
 export const CollectionsPage = () => {
-  const { collections, fetchCollections, fetchSubscriptions } =
+  const { collections, fetchCollections, clearSubscriptions } =
     useCollections();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const loadCollections = useCallback(async () => {
-    try {
-      await fetchCollections();
-    } catch (error) {
-      console.error("Failed to fetch subscriptions:", error);
-    }
-  }, [fetchCollections]);
-
-  const loadSubscribtions = useCallback(async () => {
-    try {
-      await fetchSubscriptions(user.uid);
-    } catch (error) {
-      console.error("Failed to fetch subscriptions:", error);
-    }
-  }, [fetchSubscriptions, user]);
-
   useEffect(() => {
-    loadSubscribtions();
-  }, [loadSubscribtions]);
-  
-  useEffect(() => {
-    loadCollections();
-  }, [loadCollections]);
+    if (user) {
+      fetchCollections(user.uid);
+    }
+    // Очищаем подписки при размонтировании компонента
+    return () => {
+      clearSubscriptions();
+    };
+  }, [user, fetchCollections, clearSubscriptions]);
 
   const openCreateCollection = () => {
     navigate("/create-collection");
@@ -57,9 +43,11 @@ export const CollectionsPage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {collections.map((collection) => (
-            <CollectionCard key={collection.id} collection={collection} />
-          ))}
+          {collections
+            .filter((col) => !col.isPrivate)
+            .map((collection) => (
+              <CollectionCard key={collection.id} collection={collection} />
+            ))}
         </div>
       )}
     </div>

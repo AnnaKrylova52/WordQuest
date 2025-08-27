@@ -8,11 +8,10 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
-  getDoc,
   collection,
   serverTimestamp,
+  onSnapshot,
   query,
-  where,
 } from "firebase/firestore";
 import { nanoid } from "nanoid";
 import axios from "axios";
@@ -23,108 +22,201 @@ export const useCollections = create((set, get) => ({
   currentCollection: null,
   error: null,
   subscribedCollections: [],
+  unsubscribeFunctions: {},
 
-  fetchCollections: async () => {
+  // Подписка на все коллекции
+  fetchCollections: (userId) => {
     set({ loading: true, error: null });
-    try {
-      const colRef = collection(db, "collections");
-      const querySnapshot = await getDocs(colRef);
-      const collectionsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      set({ collections: collectionsData, loading: false });
-    } catch (error) {
-      set({ error: error.message, loading: false });
-      throw error;
+
+    // Отписываемся от предыдущих слушателей
+    if (get().unsubscribeFunctions.collections) {
+      get().unsubscribeFunctions.collections();
     }
-  },
 
-  fetchCollection: async (id) => {
-    set({ loading: true, error: null });
-    try {
-      const docRef = doc(db, "collections", id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
+    const colRef = collection(db, "collections");
+    const q = query(colRef);
+
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const collectionsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
         set({
-          currentCollection: { id: docSnap.id, ...docSnap.data() },
+          collections: collectionsData.map((col) => ({
+            ...col,
+            isSubscribed: (col.subscribedUsers || []).includes(userId),
+          })),
           loading: false,
         });
-      } else {
-        set({
-          loading: false,
-          error: "Collection not found",
-          currentCollection: null,
-        });
+      },
+      (error) => {
+        set({ error: error.message, loading: false });
       }
-    } catch (error) {
-      set({
-        error: error.message,
-        loading: false,
-        currentCollection: null,
-      });
-      throw error;
-    }
+    );
+
+    // Сохраняем функцию отписки
+    set((state) => ({
+      unsubscribeFunctions: {
+        ...state.unsubscribeFunctions,
+        collections: unsubscribe,
+      },
+    }));
   },
-  fetchSubscriptions: async (userId) => {
+
+  // Подписка на конкретную коллекцию
+  fetchCollection: (id, userId) => {
     set({ loading: true, error: null });
-    try {
-      const q = query(
-        collection(db, "collections"),
-        where("subscribedUsers", "array-contains", userId)
-      );
-      const querySnapshot = await getDocs(q);
-      const subscribedIds = querySnapshot.docs.map((doc) => doc.id);
-      const userCollections = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      set({
-        subscribedCollections: subscribedIds,
-        loading: false,
-        userCollections: userCollections,
-      });
-    } catch (error) {
-      set({
-        error: error.message,
-        loading: false,
-        subscribedCollections: [],
-        userCollections: [],
-      });
-      throw error;
+
+    // Отписываемся от предыдущего слушателя этой коллекции
+    if (get().unsubscribeFunctions[id]) {
+      get().unsubscribeFunctions[id]();
     }
+
+    const docRef = doc(db, "collections", id);
+
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          set({
+            currentCollection: {
+              id: docSnap.id,
+              ...docSnap.data(),
+              isSubscribed: (docSnap.data().subscribedUsers || []).includes(
+                userId
+              ),
+            },
+            loading: false,
+          });
+        } else {
+          set({
+            loading: false,
+            error: "Collection not found",
+            currentCollection: null,
+          });
+        }
+      },
+      (error) => {
+        set({ error: error.message, loading: false });
+      }
+    );
+
+    // Сохраняем функцию отписки
+    set((state) => ({
+      unsubscribeFunctions: {
+        ...state.unsubscribeFunctions,
+        [id]: unsubscribe,
+      },
+    }));
+  },
+
+  clearSubscriptions: () => {
+    const { unsubscribeFunctions } = get();
+    Object.values(unsubscribeFunctions).forEach((unsubscribe) => {
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
+    });
+    set({ unsubscribeFunctions: {} });
+  },
+
+  // Добавляем метод для обновления подписок при смене пользователя
+  refreshSubscriptions: (userId) => {
+    const state = get();
+
+    // Обновляем все коллекции с новым userId
+    const updatedCollections = state.collections.map((col) => ({
+      ...col,
+      isSubscribed: (col.subscribedUsers || []).includes(userId),
+    }));
+
+    // Обновляем текущую коллекцию, если она есть
+    const updatedCurrentCollection = state.currentCollection
+      ? {
+          ...state.currentCollection,
+          isSubscribed: (
+            state.currentCollection.subscribedUsers || []
+          ).includes(userId),
+        }
+      : null;
+
+    set({
+      collections: updatedCollections,
+      currentCollection: updatedCurrentCollection,
+    });
   },
   subscribeToCollection: async (collectionId, userId) => {
     try {
-      const { collections } = get();
-      const collectionToSubscribe = collections.find(
-        (c) => c.id === collectionId
-      );
       await updateDoc(doc(db, "collections", collectionId), {
         subscribedUsers: arrayUnion(userId),
       });
-      set((state) => ({
-        subscribedCollections: [...state.subscribedCollections, collectionId],
-        userCollections: [...state.userCollections, collectionToSubscribe],
-      }));
+      set((state) => {
+        const updatedCurrentCollection =
+          state.currentCollection && state.currentCollection.id === collectionId
+            ? {
+                ...state.currentCollection,
+                isSubscribed: true,
+                subscribedUsers: [
+                  ...(state.currentCollection.subscribedUsers || []),
+                  userId,
+                ],
+              }
+            : state.currentCollection;
+
+        return {
+          currentCollection: updatedCurrentCollection,
+          collections: state.collections.map((col) =>
+            col.id === collectionId
+              ? {
+                  ...col,
+                  isSubscribed: true,
+                  subscribedUsers: [...(col.subscribedUsers || []), userId],
+                }
+              : col
+          ),
+        };
+      });
     } catch (error) {
       set({ error: error.message });
       throw error;
     }
   },
-  unsubscribeFormCollection: async (collectionId, userId) => {
+
+  unsubscribeFromCollection: async (collectionId, userId) => {
     try {
       await updateDoc(doc(db, "collections", collectionId), {
         subscribedUsers: arrayRemove(userId),
       });
-      set((state) => ({
-        subscribedCollections: state.subscribedCollections.filter(
-          (id) => id !== collectionId
-        ),
-        userCollections: state.userCollections.filter(
-          (col) => col.id !== collectionId
-        ),
-      }));
+      set((state) => {
+        const updatedCurrentCollection =
+          state.currentCollection && state.currentCollection.id === collectionId
+            ? {
+                ...state.currentCollection,
+                isSubscribed: false,
+                subscribedUsers: (
+                  state.currentCollection.subscribedUsers || []
+                ).filter((id) => id !== userId),
+              }
+            : state.currentCollection;
+
+        return {
+          currentCollection: updatedCurrentCollection,
+          collections: state.collections.map((col) =>
+            col.id === collectionId
+              ? {
+                  ...col,
+                  isSubscribed: false,
+                  subscribedUsers: (col.subscribedUsers || []).filter(
+                    (id) => id !== userId
+                  ),
+                }
+              : col
+          ),
+        };
+      });
     } catch (error) {
       set({ error: error.message });
       throw error;
@@ -134,21 +226,16 @@ export const useCollections = create((set, get) => ({
   createCollection: async (collectionData, user, isPrivate) => {
     try {
       const id = nanoid();
-      const userId = user.uid;
 
-      if (!isPrivate) {
-        await setDoc(doc(db, "collections", id), {
-          ...collectionData,
-          firebaseId: id,
-          collectionOwner: user.name,
-          isPrivate: isPrivate,
-          createdAt: serverTimestamp(),
-          totalUsers: 1,
-          ownerId: userId,
-          subscribedUsers: [userId],
-        });
-      }
-
+      await setDoc(doc(db, "collections", id), {
+        ...collectionData,
+        firebaseId: id,
+        collectionOwner: user.name,
+        isPrivate: isPrivate,
+        createdAt: serverTimestamp(),
+        totalUsers: 1,
+        ownerId: user.uid,
+      });
       set((state) => ({
         collections: [...state.collections, { id, ...collectionData }],
       }));
@@ -171,6 +258,7 @@ export const useCollections = create((set, get) => ({
       throw error;
     }
   },
+
   deleteTerm: async (collectionId, termId) => {
     try {
       const state = get();
@@ -187,7 +275,6 @@ export const useCollections = create((set, get) => ({
         (word) => word.id !== termId
       );
 
-      // Обновляем основную коллекцию
       await updateDoc(doc(db, "collections", collectionId), {
         words: updatedWords,
       });
@@ -320,6 +407,17 @@ export const useCollections = create((set, get) => ({
       return allDefinitions;
     } catch (error) {
       console.error("Error:", error);
+    }
+  },
+  updatePrivacy: async (isPrivate, collectionId) => {
+    try {
+      const docRef = doc(db, "collections", collectionId);
+      await updateDoc(docRef, {
+        isPrivate: isPrivate,
+      });
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
     }
   },
 }));

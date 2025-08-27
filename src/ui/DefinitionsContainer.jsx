@@ -5,7 +5,7 @@ export const DefinitionsContainer = ({
   setDefinitions,
 }) => {
   return (
-    <div className="mt-2 border border-gray-200 dark:border-neutral-700 rounded-lg p-3">
+    <div className="border border-gray-200 dark:border-neutral-700 rounded-lg p-3">
       <div className="flex justify-between">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Suggested definitions:

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Notification } from "../ui/Notification";
+import { useCollections } from "../store/useCollections";
 import {
   signOut,
   onAuthStateChanged,
@@ -25,6 +26,8 @@ import { auth, db, signInWithGoogle } from "../config/firebase";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const { fetchCollections, clearSubscriptions, refreshSubscriptions } =
+    useCollections();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [notification, setNotification] = useState(null);
@@ -58,6 +61,7 @@ export const AuthProvider = ({ children }) => {
 
             // Явно устанавливаем состояние администратора
             setIsAdmin(role === "admin");
+            fetchCollections(firebaseUser.uid);
           }
         } catch (error) {
           console.error("Firestore error:", error);
@@ -66,6 +70,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         setUser(null);
         setIsAdmin(false);
+        clearSubscriptions();
       }
       setLoading(false);
     });
@@ -139,6 +144,7 @@ export const AuthProvider = ({ children }) => {
         role: "user",
       };
       setUser(userData);
+      refreshSubscriptions(userData.id);
       showNotification("success", "Successful login via Google");
       navigate("/home");
     } catch (error) {
@@ -377,6 +383,7 @@ export const AuthProvider = ({ children }) => {
         await updateDoc(doc(db, "users", result.user.uid), {
           lastLogin: serverTimestamp(),
         });
+        refreshSubscriptions(result.user.uid);
         navigate("/home");
         return;
       }
@@ -433,6 +440,7 @@ export const AuthProvider = ({ children }) => {
     // Если пользователь вошел через Google, выходим из Firebase
     try {
       await signOut(auth);
+      clearSubscriptions()
     } catch (error) {
       console.error(error);
       throw error;
@@ -464,12 +472,11 @@ export const AuthProvider = ({ children }) => {
     >
       {children}
 
- 
-        {notification && (
-          <Notification type={notification.type}>
-            {notification.message}
-          </Notification>
-        )}
+      {notification && (
+        <Notification type={notification.type}>
+          {notification.message}
+        </Notification>
+      )}
     </AuthContext.Provider>
   );
 };
