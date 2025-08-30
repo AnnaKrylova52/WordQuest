@@ -6,7 +6,7 @@ import {
   updateDoc,
   doc,
   getDoc,
-
+  serverTimestamp,
 } from "firebase/firestore";
 export const useUserData = create((set, get) => ({
   usersData: [],
@@ -34,12 +34,15 @@ export const useUserData = create((set, get) => ({
       const userData = docSnap.data();
       const field = `${filedSize}x${filedSize}`;
       const currentRecord =
-        userData?.memoryGameRecords?.fieldSize?.[field] || Infinity;
+        userData?.memoryGameRecords?.fieldSize?.[field].moves || Infinity;
       if (currentRecord > moves) {
         await updateDoc(docRef, {
           memoryGameRecords: {
             fieldSize: {
-              [field]: moves,
+              [field]: {
+                moves: moves,
+                date: serverTimestamp(),
+              },
             },
           },
         });
@@ -49,5 +52,35 @@ export const useUserData = create((set, get) => ({
       throw error;
     }
   },
-  
+  shuffleArray: (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const randomIndex = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[randomIndex]] = [
+        shuffled[randomIndex],
+        shuffled[i],
+      ];
+    }
+    return shuffled;
+  },
+
+  uploadTimeGameResults: async (userId, guessedWords) => {
+    try {
+      const docRef = doc(db, "users", userId);
+      const docSnap = await getDoc(docRef);
+      const userData = docSnap.data();
+      const currentRecord = userData?.timeGameRecords.words || 0;
+      if (guessedWords > currentRecord) {
+        await updateDoc(docRef, {
+          timeGameRecords: {
+            words: guessedWords,
+            date: serverTimestamp(),
+          },
+        });
+      }
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
 }));

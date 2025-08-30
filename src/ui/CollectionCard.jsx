@@ -25,7 +25,7 @@ export const CollectionCard = ({ collection }) => {
   };
   if (authLoading) {
     return (
-      <div className="border rounded-xl overflow-hidden shadow-md bg-white dark:bg-black animate-pulse h-64"></div>
+      <div className="border rounded-xl overflow-hidden shadow-md bg-white dark:bg-neutral-950 animate-pulse h-64"></div>
     );
   }
 
@@ -34,7 +34,7 @@ export const CollectionCard = ({ collection }) => {
       onClick={() => openDetails(collection)}
       className={`
                 border rounded-xl overflow-hidden shadow-md
-                bg-white dark:bg-black
+                bg-white dark:bg-neutral-950
                 text-gray-800 dark:text-gray-100
                 border-red-500 dark:border-red-800
                 hover:shadow-lg hover:border-red-800 dark:hover:border-red-500

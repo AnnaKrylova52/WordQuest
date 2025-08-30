@@ -9,6 +9,7 @@ import {
   XMarkIcon,
   PencilSquareIcon,
   MagnifyingGlassIcon,
+  SpeakerWaveIcon,
 } from "@heroicons/react/24/outline";
 import { useCollections } from "../store/useCollections";
 import { useAuth } from "../hooks/useAuth";
@@ -54,7 +55,14 @@ export const CollectionDetails = () => {
       fetchCollection(id, user.uid);
     }
   }, [id, fetchCollection, user]);
-
+  useEffect(() => {
+    return () => {
+      // Остановить всю речь при размонтировании компонента
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
   const handleEditTerm = (term) => {
     setUpdateTerm(true);
     setAddTerm(false);
@@ -98,7 +106,11 @@ export const CollectionDetails = () => {
           id: newTerm.id,
         });
       }
+
+      await fetchCollection(id, user.uid);
+
       setNewTerm({ term: "", definition: "", id: "" });
+      setDefinitions([]);
       setAddTerm(false);
       setUpdateTerm(false);
     } catch (error) {
@@ -118,6 +130,7 @@ export const CollectionDetails = () => {
   const handleClose = () => {
     setNewTerm({ term: "", definition: "", id: "" });
     setAddTerm(false);
+    setDefinitions([]);
     setUpdateTerm(false);
   };
   const handleChangeTitle = async () => {
@@ -180,6 +193,18 @@ export const CollectionDetails = () => {
     } catch (error) {
       console.error("Error updating privacy: ", error);
       showNotification("error", "Failed to update privacy setting");
+    }
+  };
+
+  const speak = (text) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.8; // Скорость произношения
+      window.speechSynthesis.speak(utterance);
+    } else {
+      console.error("Браузер не поддерживает синтез речи");
+      showNotification("error", "Your browser does not support voicovers");
     }
   };
 
@@ -306,9 +331,15 @@ export const CollectionDetails = () => {
           {currentCollection?.words.map((word) => (
             <div
               key={word.id}
-              className="grid grid-cols-12 shadow-lg dark:shadow-none divide-x-2 gap-4 mb-4 rounded-lg p-4  items-center bg-white dark:bg-black"
+              className="grid grid-cols-12 shadow-lg dark:shadow-none divide-x-2 gap-4 mb-4 rounded-lg p-4  items-center bg-white dark:bg-neutral-950"
             >
-              <h3 className="py-4 pr-4 col-span-4 break-words">{word.term}</h3>
+              <div className="flex items-center gap-2 py-4 pr-4 col-span-4">
+                <h3 className=" break-words">{word.term}</h3>
+                <SpeakerWaveIcon
+                  onClick={() => speak(word.term)}
+                  className="w-5 h-5 cursor-pointer text-gray-500 hover:text-gray-600"
+                />
+              </div>
               <div className="flex justify-between items-center col-span-8 min-w-0">
                 <p className="py-4 pr-4 break-words min-w-0 flex-1">
                   {word.definition}
@@ -336,7 +367,7 @@ export const CollectionDetails = () => {
       </div>
       {(isAddTerm || isUpdateTerm) && (
         <div className="fixed inset-0 backdrop-blur-xs bg-opacity-20 flex items-center justify-center z-50 p-4 ">
-          <div className="bg-white dark:bg-black rounded-xl shadow-xl w-full max-w-md p-6 border-2 border-red-600">
+          <div className="bg-white dark:bg-neutral-950 rounded-xl shadow-xl w-full max-w-md p-6 border-2 border-red-600">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {isUpdateTerm ? "Change Term" : "Add New Term"}

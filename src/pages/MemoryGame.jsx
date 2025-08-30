@@ -1,7 +1,7 @@
-import { useEffect, useCallback, useState, useRef } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useCollections } from "../store/useCollections";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import {  useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useUserData } from "../store/useUserData";
 import { useAuth } from "../hooks/useAuth";
 import { BackButton } from "../ui/BackButton";
@@ -20,7 +20,7 @@ export const MemoryGame = () => {
   });
   const { id } = useParams();
   const { user } = useAuth();
-  const { uploadMemoryGameResults } = useUserData();
+  const { uploadMemoryGameResults, shuffleArray } = useUserData();
   const loadCollection = useCallback(async () => {
     try {
       await fetchCollection(id);
@@ -68,18 +68,6 @@ export const MemoryGame = () => {
   const clearHistory = () => {
     setGameHistory([]);
     localStorage.removeItem("memoryGameHistory");
-  };
-
-  const shuffleArray = (array) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const randomIndex = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[randomIndex]] = [
-        shuffled[randomIndex],
-        shuffled[i],
-      ];
-    }
-    return shuffled;
   };
 
   const initializeGame = () => {
@@ -273,7 +261,7 @@ export const MemoryGame = () => {
               <div
                 key={index}
                 onClick={() => handleClick(index)}
-                className={`border-2 dark:text-white text-sm  bg-white dark:bg-black rounded-lg h-50 md:h-60 flex items-center justify-center p-6 relative cursor-pointer transition-transform duration-500 preserve-3d ${
+                className={`border-2 dark:text-white text-sm  bg-white dark:bg-neutral-950 rounded-lg h-50 md:h-60 flex items-center justify-center p-6 relative cursor-pointer transition-transform duration-500 preserve-3d ${
                   openCards.includes(index) || matchedCards.includes(card.id)
                     ? "rotate-y-180 pointer-events-none"
                     : ""
@@ -288,7 +276,7 @@ export const MemoryGame = () => {
                 style={{ perspective: "1000px" }}
               >
                 {/* Лицевая сторона (рубашка) */}
-                <div className="absolute inset-0 w-full h-full bg-white dark:bg-black dark:border-gray-800 rounded-lg flex items-center justify-center backface-hidden">
+                <div className="absolute inset-0 w-full h-full  dark:border-gray-800 rounded-lg flex items-center justify-center backface-hidden">
                   <div className="text-center p-2">
                     <svg
                       version="1.0"
@@ -456,7 +444,7 @@ export const MemoryGame = () => {
                 {/* Обратная сторона (содержимое) */}
                 <div
                   className={`
-          absolute inset-0 w-full h-full bg-white dark:bg-black 
+          absolute inset-0 w-full h-full 
           rounded-lg flex items-center justify-center p-2 sm:p-6 
           backface-hidden rotate-y-180
         `}

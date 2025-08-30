@@ -406,7 +406,14 @@ export const useCollections = create((set, get) => ({
 
       return allDefinitions;
     } catch (error) {
-      console.error("Error:", error);
+      if (error.response && error.response.status === 404) {
+        // Термин не найден
+        console.log("Term not found");
+        return []; // Возвращаем пустой массив вместо ошибки
+      } else {
+        console.error("Error:", error);
+        throw error;
+      }
     }
   },
   updatePrivacy: async (isPrivate, collectionId) => {

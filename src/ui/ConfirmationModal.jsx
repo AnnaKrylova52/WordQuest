@@ -30,7 +30,7 @@ export const ConfirmationModal = ({ title, setClose, setConfirm }) => {
     <div className="fixed inset-0 backdrop-blur-xs bg-opacity-20 flex items-center justify-center z-50 p-4 ">
       <div
         ref={modalRef}
-        className="bg-white dark:bg-black p-6 rounded-xl shadow-xl dark:shadow-none"
+        className="bg-white dark:bg-neutral-950 p-6 rounded-xl shadow-xl dark:shadow-none"
       >
         <h3 className="dark:text-white text-xl mb-4">{title}</h3>
         <div className="flex justify-center gap-4">

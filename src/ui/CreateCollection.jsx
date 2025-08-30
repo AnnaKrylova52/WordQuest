@@ -145,7 +145,7 @@ export const CreateCollection = () => {
               type="text"
               id="title"
               placeholder="Title"
-              className="border border-red-600 rounded-xl p-4 w-full bg-white dark:bg-black focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="border border-red-600 rounded-xl p-4 w-full bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500"
               value={collection.title}
               onChange={(e) =>
                 setCollection({ ...collection, title: e.target.value })
@@ -158,7 +158,7 @@ export const CreateCollection = () => {
               id="description"
               placeholder="Description"
               rows="3"
-              className="border border-red-600 rounded-xl w-full p-4 bg-white dark:bg-black resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="border border-red-600 rounded-xl w-full p-4 bg-white dark:bg-neutral-950 resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
               value={collection.description}
               onChange={(e) =>
                 setCollection({ ...collection, description: e.target.value })
@@ -167,7 +167,10 @@ export const CreateCollection = () => {
           </div>
           <div className="space-y-4">
             {collection.words.map((card, index) => (
-              <div key={card.id} className="bg-white dark:bg-black rounded-xl">
+              <div
+                key={card.id}
+                className="bg-white dark:bg-neutral-950 rounded-xl"
+              >
                 <div className="border-b p-4 flex justify-between">
                   <span>{index + 1}</span>
                   <TrashIcon
