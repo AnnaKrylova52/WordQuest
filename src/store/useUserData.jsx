@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 export const useUserData = create((set, get) => ({
   usersData: [],
+  userData: [],
   error: null,
 
   fetchUsers: async () => {
@@ -21,6 +22,19 @@ export const useUserData = create((set, get) => ({
         ...doc.data(),
       }));
       set({ usersData: collectionsData });
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+    fetchUser: async (userId) => {
+    try {
+      const docRef = doc(db, "users", userId);
+      const docSnapshot = await getDoc(docRef);
+      if(docSnapshot.exists()){
+   set({userData: docSnapshot.data()})
+      }
+   
     } catch (error) {
       set({ error: error.message });
       throw error;
@@ -83,4 +97,34 @@ export const useUserData = create((set, get) => ({
       throw error;
     }
   },
+   updateUserPhoto: async (img, userId) => {
+    try {
+      await updateDoc(doc(db, `users`, userId), {
+        profilePhoto: img,
+      });
+      set(state => ({
+        userData: {
+          ...state.userData,
+          profilePhoto: img
+        }
+      }))
+    } catch (error) {
+      console.error("Error updating profile photo:", error);
+    }
+  },
+  deleteUserPhoto: async (userId) => {
+    try {
+      await updateDoc(doc(db, "users", userId), {
+        profilePhoto: null,
+      });
+        set(state => ({
+        userData: {
+          ...state.userData,
+          profilePhoto: null
+        }
+      }))
+    } catch (error) {
+      console.error("Error updating profile photo:", error);
+    }
+  }
 }));

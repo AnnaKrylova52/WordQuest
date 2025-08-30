@@ -55,6 +55,7 @@ export const CollectionDetails = () => {
       fetchCollection(id, user.uid);
     }
   }, [id, fetchCollection, user]);
+  
   useEffect(() => {
     return () => {
       // Остановить всю речь при размонтировании компонента

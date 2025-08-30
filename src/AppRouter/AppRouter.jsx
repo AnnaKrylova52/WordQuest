@@ -10,6 +10,7 @@ import { CollectionDetails } from "../ui/CollectionDetails";
 import { LibraryPage } from "../pages/LibraryPage";
 import { MemoryGame } from "../pages/MemoryGame";
 import { TimeGame } from "../pages/TimeGame";
+import { Settings } from "../pages/Settings";
 
 export const AppRouter = () => {
   const ProtectedRoute = () => {
@@ -38,6 +39,7 @@ export const AppRouter = () => {
           <Route path="/user/collections" element={<LibraryPage />} />
           <Route path="/:id/memory-game" element={<MemoryGame />} />
           <Route path="/:id/time-game" element={<TimeGame />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
 

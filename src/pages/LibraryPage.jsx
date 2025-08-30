@@ -27,7 +27,6 @@ export const LibraryPage = () => {
     loadData();
   }, [fetchCollections, user]);
 
-  // Показываем индикатор загрузки, пока данные не загружены
   if (authLoading || loading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">

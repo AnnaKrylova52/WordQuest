@@ -32,11 +32,11 @@ export const ConfirmationModal = ({ title, setClose, setConfirm }) => {
         ref={modalRef}
         className="bg-white dark:bg-neutral-950 p-6 rounded-xl shadow-xl dark:shadow-none"
       >
-        <h3 className="dark:text-white text-xl mb-4">{title}</h3>
+        <h3 className="text-neutral-700 dark:text-white text-xl mb-4">{title}</h3>
         <div className="flex justify-center gap-4">
           <button
             onClick={setClose}
-            className="px-4 py-2 bg-neutral-600 text-white rounded-xl hover:bg-neutral-700 transition-colors cursor-pointer"
+            className="px-4 py-2 bg-neutral-400 hover:bg-neutral-500 dark:bg-neutral-600 text-white rounded-xl dark:hover:bg-neutral-700 transition-colors cursor-pointer"
           >
             No
           </button>
