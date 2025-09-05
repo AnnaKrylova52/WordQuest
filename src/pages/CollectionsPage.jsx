@@ -1,22 +1,9 @@
-import { useCallback, useEffect } from "react";
 import { useCollections } from "../store/useCollections";
 import { useNavigate } from "react-router-dom";
 import { CollectionCard } from "../ui/CollectionCard";
-import { useAuth } from "../hooks/useAuth";
 export const CollectionsPage = () => {
-  const { collections, fetchCollections, clearSubscriptions } =
-    useCollections();
-  const { user, loading } = useAuth();
+  const { collections } = useCollections();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (user) {
-      fetchCollections(user.uid);
-    }
-    // Очищаем подписки при размонтировании компонента
-    return () => {
-      clearSubscriptions();
-    };
-  }, [user, fetchCollections, clearSubscriptions]);
 
   const openCreateCollection = () => {
     navigate("/create-collection");

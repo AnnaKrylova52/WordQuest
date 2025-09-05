@@ -1,12 +1,12 @@
-import { useEffect, useCallback, useState } from "react";
-import { useCollections } from "../store/useCollections";
+import { useEffect, useState } from "react";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import { useParams } from "react-router-dom";
 import { useUserData } from "../store/useUserData";
 import { useAuth } from "../hooks/useAuth";
 import { BackButton } from "../ui/BackButton";
+import { useLocation } from "react-router-dom";
 export const MemoryGame = () => {
-  const { currentCollection, fetchCollection } = useCollections();
+  const location = useLocation();
+  const currentCollection = location.state?.currentCollection;
   const [fieldSize, setFieldSize] = useState(4);
   const [cards, setCards] = useState([]);
   const [openCards, setOpenCards] = useState([]);
@@ -18,20 +18,8 @@ export const MemoryGame = () => {
     const saved = localStorage.getItem("memoryGameHistory");
     return saved ? JSON.parse(saved) : [];
   });
-  const { id } = useParams();
   const { user } = useAuth();
   const { uploadMemoryGameResults, shuffleArray } = useUserData();
-  const loadCollection = useCallback(async () => {
-    try {
-      await fetchCollection(id);
-    } catch (error) {
-      console.error("Failed to fetch collection:", error);
-    }
-  }, [fetchCollection, id]);
-
-  useEffect(() => {
-    loadCollection();
-  }, [loadCollection]);
 
   useEffect(() => {
     initializeGame();

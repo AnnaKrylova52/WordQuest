@@ -8,7 +8,7 @@ export const CollectionCard = ({ collection }) => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const openDetails = (collection) => {
-    navigate(`/collections/${collection.id}`, { state: { collection } });
+    navigate(`/collections/${collection.id}`);
   };
 
   const handleSubscribe = async (e, collectionId) => {
@@ -54,7 +54,9 @@ export const CollectionCard = ({ collection }) => {
             )}
           </button>
         ) : (
-          <UserCircleIcon className="h-6 w-6" />
+          <div className="bg-gradient-to-br from-neutral-200 to-red-400 dark:from-neutral-700 dark:to-red-600 rounded-full w-6 h-6  flex items-center justify-center border border-red-600">
+            <UserCircleIcon className=" text-red-600" />
+          </div>
         )}
       </div>
 

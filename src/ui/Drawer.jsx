@@ -28,6 +28,7 @@ export const Drawer = ({ isOpen, onClose, children, title, size }) => {
           isOpen ? "translate-x-0" : "translate-x-full"
         } ${size}`}
       >
+        <div className="h-16" />
         <header className="flex justify-between items-center p-2 sm:p-6 border-b border-neutral-400 dark:border-neutral-600">
           <h2 className="text-2xl font-bold dark:text-white">{title}</h2>
           <button

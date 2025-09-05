@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { useParams, useNavigate, useAsyncError, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import {
   StarIcon,
@@ -13,12 +13,12 @@ import {
 } from "@heroicons/react/24/outline";
 import { useCollections } from "../store/useCollections";
 import { useAuth } from "../hooks/useAuth";
-import { Loader } from "./Loader";
+import { Loader } from "../ui/Loader";
 import { nanoid } from "nanoid";
-import { ConfirmationModal } from "./confirmationModal";
-import { DefinitionsContainer } from "./DefinitionsContainer";
-import { Modal } from "./Modal";
-import { BackButton } from "./BackButton";
+import { ConfirmationModal } from "../ui/confirmationModal";
+import { DefinitionsContainer } from "../ui/DefinitionsContainer";
+import { Modal } from "../ui/Modal";
+import { BackButton } from "../ui/BackButton";
 export const CollectionDetails = () => {
   const navigate = useNavigate();
   const {
@@ -44,7 +44,6 @@ export const CollectionDetails = () => {
   const [isUpdateDescription, setUpdateDescription] = useState(false);
   const [isConfirm, setConfirm] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const [isPrivate, setPrivate] = useState(currentCollection?.isPrivate);
   const [newDescription, setNewDescription] = useState("");
   const [definitions, setDefinitions] = useState([]);
   const [newTerm, setNewTerm] = useState({ term: "", definition: "", id: "" });
@@ -55,7 +54,7 @@ export const CollectionDetails = () => {
       fetchCollection(id, user.uid);
     }
   }, [id, fetchCollection, user]);
-  
+
   useEffect(() => {
     return () => {
       // Остановить всю речь при размонтировании компонента
@@ -180,7 +179,7 @@ export const CollectionDetails = () => {
       showNotification("error", "Collection must contain at least 8 words!");
       return;
     }
-    navigate(`/${id}/memory-game`);
+    navigate(`/${id}/memory-game`, { state: { currentCollection } });
   };
 
   const handlePrivacyChange = async (e) => {
@@ -208,14 +207,19 @@ export const CollectionDetails = () => {
       showNotification("error", "Your browser does not support voicovers");
     }
   };
-
+  const handleOwnerClick = () => {
+    if (currentCollection.ownerId !== user.uid) {
+      navigate(`/user/${currentCollection.ownerId}`);
+    } else {
+      navigate("/settings");
+    }
+  };
   if (loading) return <Loader />;
 
   return (
     <div className=" py-8">
       <div className="max-w-4xl mx-auto px-4">
         <BackButton />
-
         <div className="mb-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-2">
@@ -247,18 +251,21 @@ export const CollectionDetails = () => {
               )}
               {(user.uid === currentCollection?.ownerId || isAdmin) && (
                 <div className="flex items-center gap-2">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={currentCollection?.isPrivate || false}
-                      onChange={handlePrivacyChange}
-                      className="sr-only peer"
-                    />
-                    <div className="relative w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-700 dark:peer-focus:ring-red-700 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-red-600 dark:peer-checked:bg-red-600"></div>
-                    <span className="ml-1 text-sm font-medium text-gray-900 dark:text-gray-300">
-                      Private
-                    </span>
-                  </label>
+                  {user.uid === currentCollection?.ownerId && (
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={currentCollection?.isPrivate || false}
+                        onChange={handlePrivacyChange}
+                        className="sr-only peer"
+                      />
+                      <div className="relative w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-700 dark:peer-focus:ring-red-700 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-red-600 dark:peer-checked:bg-red-600"></div>
+                      <span className="ml-1 text-sm font-medium text-gray-900 dark:text-gray-300">
+                        Private
+                      </span>
+                    </label>
+                  )}
+
                   <button
                     onClick={() => setConfirm(true)}
                     className="text-white bg-red-600 hover:bg-red-700  py-2 px-4 rounded-3xl cursor-pointer transition "
@@ -270,9 +277,15 @@ export const CollectionDetails = () => {
             </div>
           </div>
 
-          <p className="text-lg text-gray-900 dark:text-white mb-4">
-            Created by {currentCollection?.collectionOwner}
-          </p>
+          <div className="flex items-center text-lg text-gray-900 dark:text-white mb-4 gap-2 mt-2">
+            <p>Created by</p>
+            <button
+              onClick={handleOwnerClick}
+              className="flex items-center gap-1 font-medium cursor-pointer hover:text-neutral-600 hover:dark:text-neutral-300 transition"
+            >
+              {currentCollection?.collectionOwner}
+            </button>
+          </div>
 
           {currentCollection?.description ? (
             <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-4">
@@ -291,10 +304,12 @@ export const CollectionDetails = () => {
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
                 No description
               </p>
-              <PencilSquareIcon
-                onClick={() => setUpdateDescription(true)}
-                className="h-6 w-6 cursor-pointer"
-              />
+              {(user.uid === currentCollection?.ownerId || isAdmin) && (
+                <PencilSquareIcon
+                  onClick={() => setUpdateDescription(true)}
+                  className="h-6 w-6 cursor-pointer"
+                />
+              )}
             </div>
           )}
 
@@ -317,7 +332,9 @@ export const CollectionDetails = () => {
               Memory game
             </button>
             <button
-              onClick={() => navigate(`/${id}/time-game`)}
+              onClick={() =>
+                navigate(`/${id}/time-game`, { state: { currentCollection } })
+              }
               className="text-white bg-red-800 border-transparent border-b-3 hover:border-red-600 hover:dark:border-white hover:border-b-3   py-2 px-6 rounded-lg cursor-pointer transition "
             >
               Time game

@@ -1,43 +1,13 @@
 import { CollectionCard } from "../ui/CollectionCard";
 import { useCollections } from "../store/useCollections";
-import { useEffect, useState } from "react"; // Добавьте импорт useState
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { UserIcon, HeartIcon } from "@heroicons/react/24/outline";
 
 export const LibraryPage = () => {
-  const { collections, fetchCollections, loading } = useCollections();
-  const { user, loading: authLoading } = useAuth();
+  const { collections } = useCollections();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [dataLoaded, setDataLoaded] = useState(false);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user) return;
-
-      try {
-        await fetchCollections(user.uid);
-        setDataLoaded(true); 
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-        setDataLoaded(true); 
-      }
-    };
-
-    loadData();
-  }, [fetchCollections, user]);
-
-  if (authLoading || loading) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <p className="text-gray-600 dark:text-gray-300">
-            Loading collections...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const createdCollections = collections.filter(
     (col) => col.ownerId === user.uid
@@ -64,14 +34,7 @@ export const LibraryPage = () => {
         </button>
       </div>
 
-      {!dataLoaded ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-300">
-            Loading collections...
-          </p>
-        </div>
-      ) : subscribedCollections.length === 0 &&
-        createdCollections.length === 0 ? (
+      {subscribedCollections.length === 0 && createdCollections.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-600 dark:text-gray-300">
             No collections in your library. Create your first collection!
@@ -83,7 +46,10 @@ export const LibraryPage = () => {
           {createdCollections.length !== 0 && (
             <div className="mb-8">
               <div className=" flex items-center gap-2  mb-4 ">
-                <UserIcon className="h-8 w-8 sm:h-10 sm:w-10 text-red-600" />
+                <div className="bg-red-600/10 p-3 rounded-full h-12 w-12 sm:h-16 sm:w-16  flex items-center justify-center ">
+                  <UserIcon className="h-8 w-8 sm:h-10 sm:w-10  text-red-600" />
+                </div>
+
                 <h2 className="text-2xl sm:text-3xl font-bold  text-black dark:text-white">
                   Created collections
                 </h2>
@@ -98,7 +64,9 @@ export const LibraryPage = () => {
           {subscribedCollections.length !== 0 && (
             <div>
               <div className="flex items-center gap-2  mb-4">
-                <HeartIcon className="h-8 w-8 sm:h-10 sm:w-10 text-red-600" />
+                <div className="bg-red-600/10 p-3 rounded-full h-12 w-12 sm:h-16 sm:w-16  flex items-center justify-center ">
+                  <HeartIcon className="h-8 w-8 sm:h-10 sm:w-10 text-red-600" />
+                </div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-black dark:text-white">
                   Subscribed collections
                 </h2>

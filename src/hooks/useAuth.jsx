@@ -21,24 +21,29 @@ import {
   serverTimestamp,
   deleteDoc,
   getDoc,
+  collection,
+  where,
+  query,
+  getDocs,
 } from "firebase/firestore";
+import { useUserData } from "../store/useUserData";
 import { auth, db, signInWithGoogle } from "../config/firebase";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const { fetchCollections, clearSubscriptions, refreshSubscriptions } =
-    useCollections();
+  const { fetchCollections } = useCollections();
+  const { fetchUser, userData, setUserData } = useUserData();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[\x21-\x7E]{8,15}$/;
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
   };
+
+  const isAdmin = userData?.role === "admin";
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -48,8 +53,8 @@ export const AuthProvider = ({ children }) => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             const role = userData.role || "user";
-
-            setUser({
+            const fullUserData = await fetchUser(firebaseUser.uid);
+            setUserData({
               uid: firebaseUser.uid,
               email: firebaseUser.email,
               name: firebaseUser.displayName || userData.name,
@@ -57,20 +62,17 @@ export const AuthProvider = ({ children }) => {
               profilePhoto: userData.profilePhoto,
               provider: firebaseUser.providerData[0]?.providerId || "email",
               role: role,
+              timeGameRecords: fullUserData?.timeGameRecords,
+              memoryGameRecords: fullUserData?.memoryGameRecords,
             });
 
-            // Явно устанавливаем состояние администратора
-            setIsAdmin(role === "admin");
             fetchCollections(firebaseUser.uid);
           }
         } catch (error) {
           console.error("Firestore error:", error);
-          setIsAdmin(false);
         }
       } else {
-        setUser(null);
-        setIsAdmin(false);
-        clearSubscriptions();
+        setUserData(null);
       }
       setLoading(false);
     });
@@ -143,8 +145,7 @@ export const AuthProvider = ({ children }) => {
         provider: "google.com",
         role: "user",
       };
-      setUser(userData);
-      refreshSubscriptions(userData.id);
+      setUserData(userData);
       showNotification("success", "Successful login via Google");
       navigate("/home");
     } catch (error) {
@@ -166,10 +167,26 @@ export const AuthProvider = ({ children }) => {
       await updateDoc(doc(db, "users", currentUser.uid), {
         displayName: newName,
       });
-      setUser((prev) => ({
-        ...prev,
+      const updatePromises = [];
+      const q = query(
+        collection(db, "collections"),
+        where("ownerId", "==", currentUser.uid)
+      );
+      const colSnap = await getDocs(q);
+      colSnap.forEach(doc=> {
+        updatePromises.push(
+          updateDoc(doc.ref, {collectionOwner: newName})
+        )
+      })
+
+      await Promise.all(updatePromises)
+      await fetchCollections(currentUser.uid)
+
+      setUserData({
+        ...userData,
         name: newName,
-      }));
+      });
+
       showNotification("success", "Username successfuly changed");
     } catch (error) {
       console.error("Error updating name", error);
@@ -191,7 +208,7 @@ export const AuthProvider = ({ children }) => {
 
       await deleteUser(currentUser);
 
-      setUser(null);
+      setUserData(null);
       showNotification("success", "Account deleted");
     } catch (error) {
       console.error("Error deliting user", error);
@@ -323,7 +340,7 @@ export const AuthProvider = ({ children }) => {
           role: "user",
         };
 
-        setUser(newUser);
+        setUserData(newUser);
         navigate("/home");
         return;
       }
@@ -383,7 +400,6 @@ export const AuthProvider = ({ children }) => {
         await updateDoc(doc(db, "users", result.user.uid), {
           lastLogin: serverTimestamp(),
         });
-        refreshSubscriptions(result.user.uid);
         navigate("/home");
         return;
       }
@@ -440,12 +456,11 @@ export const AuthProvider = ({ children }) => {
     // Если пользователь вошел через Google, выходим из Firebase
     try {
       await signOut(auth);
-      clearSubscriptions()
     } catch (error) {
       console.error(error);
       throw error;
     } finally {
-      setUser(null);
+      setUserData(null);
       localStorage?.removeItem("authData");
       navigate("/login");
     }
@@ -454,7 +469,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: userData,
         loading,
         register,
         onLogout,

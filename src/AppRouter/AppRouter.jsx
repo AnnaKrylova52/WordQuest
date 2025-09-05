@@ -5,12 +5,14 @@ import { SignIn } from "../Auth/SignIn";
 import { SignUp } from "../Auth/SignUp";
 import { MainLayout } from "./MainLayout";
 import { CollectionsPage } from "../pages/CollectionsPage";
-import { CreateCollection } from "../ui/CreateCollection";
-import { CollectionDetails } from "../ui/CollectionDetails";
+import { CreateCollection } from "../pages/CreateCollection";
+import { CollectionDetails } from "../pages/CollectionDetails";
 import { LibraryPage } from "../pages/LibraryPage";
 import { MemoryGame } from "../pages/MemoryGame";
 import { TimeGame } from "../pages/TimeGame";
 import { Settings } from "../pages/Settings";
+import { UserCollections } from "../pages/UsersCollections";
+import { HomePage } from "../pages/HomePage";
 
 export const AppRouter = () => {
   const ProtectedRoute = () => {
@@ -33,13 +35,15 @@ export const AppRouter = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/collections" element={<CollectionsPage />} />
-          <Route path="/home" element={<div>No main page yet</div>} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/collections/:id" element={<CollectionDetails />} />
           <Route path="/create-collection" element={<CreateCollection />} />
           <Route path="/user/collections" element={<LibraryPage />} />
           <Route path="/:id/memory-game" element={<MemoryGame />} />
           <Route path="/:id/time-game" element={<TimeGame />} />
+          <Route path="/learning" element={<UserCollections />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/user/:userId" element={<UserCollections />} />
         </Route>
       </Route>
 

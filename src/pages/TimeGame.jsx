@@ -1,12 +1,13 @@
 import { useCollections } from "../store/useCollections";
 import { useUserData } from "../store/useUserData";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import { BackButton } from "../ui/BackButton";
 import { useAuth } from "../hooks/useAuth";
+import { useLocation } from "react-router-dom";
 export const TimeGame = () => {
-  const { currentCollection, fetchCollection } = useCollections();
-  const { shuffleArray, uploadTimeGameResults } = useUserData();
+  const location = useLocation();
+  const currentCollection = location.state?.currentCollection;
+  const { shuffleArray, uploadTimeGameResults, setUserData } = useUserData();
   const { user } = useAuth();
   const [words, setWords] = useState([]);
   const [currentWord, setCurrentWord] = useState({});
@@ -15,21 +16,8 @@ export const TimeGame = () => {
   const [guessedWords, setGuessedWords] = useState(0);
   const [error, setError] = useState("");
   const [term, setTerm] = useState("");
-  const { id } = useParams();
-  const [time, setTime] = useState(60);
+  const [time, setTime] = useState(120);
   const timeRef = useRef();
-
-  const loadCollection = useCallback(async () => {
-    try {
-      await fetchCollection(id);
-    } catch (error) {
-      console.error("Failed to fetch collection:", error);
-    }
-  }, [fetchCollection, id]);
-
-  useEffect(() => {
-    loadCollection();
-  }, [loadCollection]);
 
   useEffect(() => {
     if (isStarted && time > 0) {
@@ -37,7 +25,7 @@ export const TimeGame = () => {
         setTime((prev) => prev - 1);
       }, 1000);
     } else if (time === 0 && isStarted) {
-      isStarted(false);
+      setStarted(false);
       setFinished(true);
       uploadTimeGameResults(user.uid, guessedWords);
       setTerm("");
@@ -54,11 +42,12 @@ export const TimeGame = () => {
     setCurrentWord(randomWord);
     setWords(shuffledWords.slice(1));
     setGuessedWords(0);
-    setTime(60);
+    setTime(120);
     setStarted(true);
     setError("");
   };
-  const handleWordClick = () => {
+
+  const handleWordClick = async () => {
     if (term.trim() === "") {
       return;
     }
@@ -74,7 +63,13 @@ export const TimeGame = () => {
     if (words.length === 0) {
       setStarted(false);
       setFinished(true);
-      uploadTimeGameResults(user.uid, newGuessedWords);
+      const updatedUserData = await uploadTimeGameResults(
+        user.uid,
+        newGuessedWords
+      );
+      if (updatedUserData) {
+        setUserData(updatedUserData);
+      }
       setTerm("");
       return;
     }
@@ -90,22 +85,28 @@ export const TimeGame = () => {
     }
   };
 
-  const handleSkipWord = () => {
+  const handleSkipWord = async () => {
     setTime((prev) => Math.max(0, prev - 10));
     setWords((prev) => prev.slice(1));
+    setError(currentWord.term);
+    setTimeout(() => {
+      setError("");
+    }, 1000);
     if (words.length === 0) {
       setStarted(false);
       setFinished(true);
-      uploadTimeGameResults(user.uid, guessedWords);
+      const updatedUserData = await uploadTimeGameResults(
+        user.uid,
+        guessedWords
+      );
+      setUserData(updatedUserData);
       setTerm("");
-      setError("");
       return;
     }
 
     const randomWord = words[0];
     setWords((prev) => prev.filter((word) => word.id !== randomWord.id));
     setCurrentWord(randomWord);
-    setError("");
     setTerm("");
   };
   return (

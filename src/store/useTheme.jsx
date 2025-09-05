@@ -18,6 +18,12 @@ export const useTheme = create(
     }),
     {
       name: "theme-storage",
+      onRehydrateStorage: () => (state) => {
+        // Вызывается после восстановления состояния из localStorage
+        if (state?.isDark) {
+          document.documentElement.classList.add("dark");
+        }
+      },
     }
   )
 );

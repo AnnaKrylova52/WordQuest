@@ -10,8 +10,10 @@ import {
 } from "firebase/firestore";
 export const useUserData = create((set, get) => ({
   usersData: [],
-  userData: [],
+  userData: null,
   error: null,
+
+  setUserData: (data) => set({ userData: data }),
 
   fetchUsers: async () => {
     try {
@@ -27,14 +29,16 @@ export const useUserData = create((set, get) => ({
       throw error;
     }
   },
-    fetchUser: async (userId) => {
+  fetchUser: async (userId) => {
     try {
       const docRef = doc(db, "users", userId);
       const docSnapshot = await getDoc(docRef);
-      if(docSnapshot.exists()){
-   set({userData: docSnapshot.data()})
+      if (docSnapshot.exists()) {
+        const userData = docSnapshot.data();
+        set({ userData });
+        return userData;
       }
-   
+      return null;
     } catch (error) {
       set({ error: error.message });
       throw error;
@@ -83,7 +87,7 @@ export const useUserData = create((set, get) => ({
       const docRef = doc(db, "users", userId);
       const docSnap = await getDoc(docRef);
       const userData = docSnap.data();
-      const currentRecord = userData?.timeGameRecords.words || 0;
+      const currentRecord = userData?.timeGameRecords?.words || 0;
       if (guessedWords > currentRecord) {
         await updateDoc(docRef, {
           timeGameRecords: {
@@ -91,23 +95,26 @@ export const useUserData = create((set, get) => ({
             date: serverTimestamp(),
           },
         });
+        const updatedDoc = await getDoc(docRef);
+        return updatedDoc.data();
       }
+      return userData;
     } catch (error) {
       set({ error: error.message });
       throw error;
     }
   },
-   updateUserPhoto: async (img, userId) => {
+  updateUserPhoto: async (img, userId) => {
     try {
       await updateDoc(doc(db, `users`, userId), {
         profilePhoto: img,
       });
-      set(state => ({
+      set((state) => ({
         userData: {
           ...state.userData,
-          profilePhoto: img
-        }
-      }))
+          profilePhoto: img,
+        },
+      }));
     } catch (error) {
       console.error("Error updating profile photo:", error);
     }
@@ -117,14 +124,32 @@ export const useUserData = create((set, get) => ({
       await updateDoc(doc(db, "users", userId), {
         profilePhoto: null,
       });
-        set(state => ({
+      set((state) => ({
         userData: {
           ...state.userData,
-          profilePhoto: null
-        }
-      }))
+          profilePhoto: null,
+        },
+      }));
     } catch (error) {
       console.error("Error updating profile photo:", error);
     }
-  }
+  },
+  fetchUserPhoto: async (userId) => {
+    try {
+      const docRef = doc(db, "users", userId);
+      const docSnapshot = await getDoc(docRef);
+      if (docSnapshot.exists()) {
+        const userData = docSnapshot.data();
+        if (userData?.profilePhoto) {
+          return userData?.profilePhoto;
+        } else {
+          return null;
+        }
+      }
+      return null;
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
 }));

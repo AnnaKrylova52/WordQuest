@@ -34,7 +34,7 @@ export const SignIn = () => {
       await regWithGoogle();
       showNotification("success", "You successfully loged in to your account!");
     } catch (error) {
-      shownotification("error", "Error log in to your account!");
+      showNotification("error", "Error log in to your account!");
       console.error(error);
     }
   };

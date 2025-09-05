@@ -113,7 +113,7 @@ export const UserProfilePhoto = ({
                 <img
                   src={profilePhoto}
                   alt="Profile"
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 dark:border-red-600 object-cover shadow-md"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-3 border-red-600 object-cover shadow-md"
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <EyeIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -166,18 +166,13 @@ export const UserProfilePhoto = ({
                     <p className="text-sm mb-2 text-center dark:text-white">
                       Upload this photo?
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-2 justify-center text-white">
+
+                    <div className="flex gap-2 justify-center text-white">
                       <button
                         onClick={handleUploadPhoto}
                         className="p-2 px-3  bg-red-600 hover:bg-red-700  rounded-3xl text-sm transition-colors"
                       >
                         Confirm
-                      </button>
-                      <button
-                        onClick={handleDeletePhoto}
-                        className="p-2 px-3 bg-neutral-600 dark:hover:bg-neutral-700 rounded-3xl text-sm transition-colors"
-                      >
-                        Remove current
                       </button>
                     </div>
                   </div>
@@ -212,16 +207,24 @@ export const UserProfilePhoto = ({
             </div>
           </div>
         )}
-        <button
-          onClick={() => setIsChangingPhoto(!isChangingPhoto)}
-          className={`dark:text-white font-medium border hover:bg-neutral-300/60 dark:hover:bg-neutral-800/60 border-red-600 p-2 px-3 rounded-3xl duration-300 transition cursor-pointer ${
-            isChangingPhoto
-              ? "self-end sm:self-auto"
-              : "self-center sm:self-auto"
-          }`}
-        >
-          {isChangingPhoto ? "Cancel" : "Change Photo"}
-        </button>
+        <div className="flex sm:flex-col  gap-4">
+          <button
+            onClick={() => setIsChangingPhoto(!isChangingPhoto)}
+            className={`dark:text-white font-medium border hover:bg-neutral-300/60 dark:hover:bg-neutral-800/60 border-red-600 p-2 px-3 rounded-3xl duration-300 transition cursor-pointer ${
+              isChangingPhoto
+                ? "self-end sm:self-auto"
+                : "self-center sm:self-auto"
+            }`}
+          >
+            {isChangingPhoto ? "Cancel" : "Change Photo"}
+          </button>
+          <button
+            onClick={handleDeletePhoto}
+            className="dark:text-white font-medium border hover:bg-neutral-300/60 dark:hover:bg-neutral-800/60 border-red-600 p-2 px-3 rounded-3xl duration-300 transition cursor-pointer"
+          >
+            Remove current
+          </button>
+        </div>
       </div>
       {isModalOpen && (
         <Modal setClose={() => setIsModalOpen(false)}>

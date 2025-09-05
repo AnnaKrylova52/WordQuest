@@ -10,8 +10,7 @@ import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "../store/useTheme";
 
 export const Settings = () => {
-  const { fetchUser, userData, updateUserPhoto, deleteUserPhoto } =
-    useUserData();
+  const { updateUserPhoto, deleteUserPhoto } = useUserData();
   const {
     user,
     deleteAccount,
@@ -42,18 +41,6 @@ export const Settings = () => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!user) return;
-      try {
-        await fetchUser(user.uid);
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-      }
-    };
-    loadData();
-  }, [fetchUser, user]);
 
   const formatFirebaseTimestamp = (timestamp) => {
     if (!timestamp) return "No date";
@@ -106,7 +93,7 @@ export const Settings = () => {
               showNotification={showNotification}
               updateUserPhoto={(img) => updateUserPhoto(img, user.uid)}
               deleteUserPhoto={() => deleteUserPhoto(user.uid)}
-              profilePhoto={userData?.profilePhoto}
+              profilePhoto={user?.profilePhoto}
             />
             <div>
               <UserNameEditor
@@ -170,10 +157,9 @@ export const Settings = () => {
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                 Memory Game Records
               </h3>
-              {userData.memoryGameRecords &&
-              userData.memoryGameRecords.fieldSize ? (
-                Object.entries(userData.memoryGameRecords.fieldSize).map(
-                  ([size, moves]) => (
+              {user.memoryGameRecords && user.memoryGameRecords.fieldSize ? (
+                Object.entries(user.memoryGameRecords.fieldSize).map(
+                  ([size, data]) => (
                     <div key={size} className="p-2 space-y-1">
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-gray-700 dark:text-neutral-200">
@@ -188,7 +174,15 @@ export const Settings = () => {
                           Moves:
                         </span>
                         <span className=" text-neutral-600 dark:text-neutral-300">
-                          {moves}
+                          {data.moves}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-700 dark:text-neutral-200">
+                          Date:
+                        </span>
+                        <span className=" text-neutral-600 dark:text-neutral-300">
+                          {formatFirebaseTimestamp(data.date)}
                         </span>
                       </div>
                     </div>
@@ -204,14 +198,14 @@ export const Settings = () => {
               <h3 className="text-lg font-semibold  text-gray-800 dark:text-white">
                 Time Game Records
               </h3>
-              {userData.timeGameRecords ? (
+              {user.timeGameRecords ? (
                 <div className="p-2 space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-gray-700 dark:text-neutral-200">
                       Date:
                     </span>
                     <span className="text-neutral-600 dark:text-neutral-300">
-                      {formatFirebaseTimestamp(userData.timeGameRecords.date)}
+                      {formatFirebaseTimestamp(user.timeGameRecords.date)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -219,7 +213,7 @@ export const Settings = () => {
                       Guessed words:
                     </span>
                     <span className="text-neutral-600 dark:text-neutral-300">
-                      {userData.timeGameRecords.words}
+                      {user.timeGameRecords.words}
                     </span>
                   </div>
                 </div>

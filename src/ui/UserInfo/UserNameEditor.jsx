@@ -27,7 +27,7 @@ export const UserNameEditor = ({
       <div className="border-t border-red-600 flex justify-between mb-3  items-center  pt-3 dark:text-white">
         <div>
           <p className="font-medium text-lg">Username</p>
-          <p>{userName}</p>
+          <p>{userName ? userName : "No name"}</p>
         </div>
 
         <button

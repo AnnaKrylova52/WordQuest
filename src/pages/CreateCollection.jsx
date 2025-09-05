@@ -8,8 +8,9 @@ import { nanoid } from "nanoid";
 import { useCollections } from "../store/useCollections";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { DefinitionsContainer } from "./DefinitionsContainer";
-import { BackButton } from "./BackButton";
+import { DefinitionsContainer } from "../ui/DefinitionsContainer";
+import { BackButton } from "../ui/BackButton";
+import { useEffect } from "react";
 
 export const CreateCollection = () => {
   const navigate = useNavigate();
@@ -107,6 +108,9 @@ export const CreateCollection = () => {
       });
     }
   };
+ useEffect(() => {
+    document.title = "Create Collection | WordQuest";
+  }, []);
 
   return (
     <div className="dark:text-white flex justify-center">
