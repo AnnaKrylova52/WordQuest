@@ -108,7 +108,7 @@ export const CreateCollection = () => {
       });
     }
   };
- useEffect(() => {
+  useEffect(() => {
     document.title = "Create Collection | WordQuest";
   }, []);
 
