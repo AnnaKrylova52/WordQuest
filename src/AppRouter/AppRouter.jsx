@@ -13,6 +13,7 @@ import { TimeGame } from "../pages/TimeGame";
 import { Settings } from "../pages/Settings";
 import { UserCollections } from "../pages/UsersCollections";
 import { HomePage } from "../pages/HomePage";
+import { LearningMode } from "../pages/LearningMode";
 
 export const AppRouter = () => {
   const ProtectedRoute = () => {
@@ -41,7 +42,7 @@ export const AppRouter = () => {
           <Route path="/user/collections" element={<LibraryPage />} />
           <Route path="/:id/memory-game" element={<MemoryGame />} />
           <Route path="/:id/time-game" element={<TimeGame />} />
-          <Route path="/learning" element={<UserCollections />} />
+          <Route path="/:id/learning" element={<LearningMode />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/user/:userId" element={<UserCollections />} />
         </Route>

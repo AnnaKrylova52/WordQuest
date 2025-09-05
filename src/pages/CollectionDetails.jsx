@@ -339,7 +339,9 @@ export const CollectionDetails = () => {
             >
               Time game
             </button>
-            <button className="text-white bg-red-800 border-transparent border-b-3 hover:border-b-3 hover:border-red-600 hover:dark:border-white box-border py-2 px-6 rounded-lg cursor-pointer transition ">
+            <button  onClick={() =>
+                navigate(`/${id}/learning`, { state: { currentCollection } })
+              } className="text-white bg-red-800 border-transparent border-b-3 hover:border-b-3 hover:border-red-600 hover:dark:border-white box-border py-2 px-6 rounded-lg cursor-pointer transition ">
               Learning
             </button>
           </div>

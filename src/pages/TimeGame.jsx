@@ -1,9 +1,9 @@
-import { useCollections } from "../store/useCollections";
 import { useUserData } from "../store/useUserData";
 import { useEffect, useRef, useState } from "react";
 import { BackButton } from "../ui/BackButton";
 import { useAuth } from "../hooks/useAuth";
 import { useLocation } from "react-router-dom";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 export const TimeGame = () => {
   const location = useLocation();
   const currentCollection = location.state?.currentCollection;
@@ -148,7 +148,7 @@ export const TimeGame = () => {
           )}
 
           {isStarted && !isFinished && (
-            <div className="max-w-3xl  space-y-4 mx-auto">
+            <div className="max-w-3xl  space-y-4 ">
               {isStarted && (
                 <div className="mb-6">
                   <div className="text-center mt-2 text-lg font-medium">
@@ -173,19 +173,19 @@ export const TimeGame = () => {
                   value={term}
                   onChange={(e) => setTerm(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  className="flex-1 border border-red-600 rounded-xl p-4 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
+                  className="flex-1 border border-red-600 rounded-2xl p-4 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
                   autoFocus
                 />
                 <div className="space-x-4">
                   <button
                     onClick={handleWordClick}
-                    className="px-6 py-4 bg-red-600 text-white rounded-xl hover:bg-red-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
+                    className="px-6 py-4 bg-red-600 text-white rounded-4xl hover:bg-red-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
                   >
                     Confirm
                   </button>
                   <button
                     onClick={handleSkipWord}
-                    className="px-6 py-4 bg-neutral-600 text-white rounded-xl hover:bg-neutral-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
+                    className="px-6 py-4 bg-neutral-600 text-white rounded-4xl hover:bg-neutral-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
                   >
                     Skip word
                   </button>
@@ -209,6 +209,14 @@ export const TimeGame = () => {
                       }%`,
                     }}
                   ></div>
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    className="mt-2 cursor-pointer flex items-center gap-0.5 dark:hover:text-neutral-300 hover:text-neutral-700 transition-colors font-medium"
+                    onClick={handleStart}
+                  >
+                    <ArrowPathIcon className="w-5 h-5" /> Reset
+                  </button>
                 </div>
               </div>
             </div>
