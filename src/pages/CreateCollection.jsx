@@ -135,7 +135,7 @@ export const CreateCollection = () => {
             </label>
             <button
               onClick={handleCreate}
-              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-3xl cursor-pointer transition "
+              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-3xl focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer transition "
             >
               Create
             </button>

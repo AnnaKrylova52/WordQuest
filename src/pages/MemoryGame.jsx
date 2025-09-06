@@ -110,7 +110,7 @@ export const MemoryGame = () => {
           <div className="flex flex-col items-end">
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className="px-4 py-2 bg-red-600 text-white rounded-3xl hover:bg-red-700 cursor-pointer transition-colors mb-2"
+              className="px-4 py-2 bg-red-600 text-white rounded-3xl hover:bg-red-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors mb-2"
             >
               {showHistory ? "Hide Game History" : "Show Game History"}
             </button>

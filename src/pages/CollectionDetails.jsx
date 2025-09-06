@@ -15,7 +15,7 @@ import { useCollections } from "../store/useCollections";
 import { useAuth } from "../hooks/useAuth";
 import { Loader } from "../ui/Loader";
 import { nanoid } from "nanoid";
-import { ConfirmationModal } from "../ui/confirmationModal";
+import { ConfirmationModal } from "../ui/ConfirmationModal";
 import { DefinitionsContainer } from "../ui/DefinitionsContainer";
 import { Modal } from "../ui/Modal";
 import { BackButton } from "../ui/BackButton";

@@ -123,7 +123,7 @@ export const TimeGame = () => {
           {!isStarted && !isFinished && (
             <button
               onClick={handleStart}
-              className="px-6 py-3 bg-red-600 text-white rounded-3xl hover:bg-red-700 cursor-pointer transition-colors text-lg font-medium"
+              className="px-6 py-3 bg-red-600 text-white rounded-3xl hover:bg-red-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors text-lg font-medium"
             >
               Start game
             </button>
@@ -140,7 +140,7 @@ export const TimeGame = () => {
               </div>
               <button
                 onClick={handleStart}
-                className="px-6 py-3 bg-red-600 text-white rounded-3xl hover:bg-red-700 cursor-pointer transition-colors"
+                className="px-6 py-3 bg-red-600 text-white rounded-3xl hover:bg-red-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-700 transition-colors"
               >
                 Play Again
               </button>
@@ -157,7 +157,7 @@ export const TimeGame = () => {
                 </div>
               )}
               <div className="w-xl flex items-center justify-center">
-                <h3 className="text-center text-lg break-words px-4">
+                <h3 className="text-center text-xl break-words px-4">
                   {currentWord?.definition}
                 </h3>
               </div>
@@ -179,7 +179,7 @@ export const TimeGame = () => {
                 <div className="space-x-4">
                   <button
                     onClick={handleWordClick}
-                    className="px-6 py-4 bg-red-600 text-white rounded-4xl hover:bg-red-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
+                    className="px-6 py-4 bg-red-600 text-white rounded-4xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer transition-colors font-medium whitespace-nowrap"
                   >
                     Confirm
                   </button>

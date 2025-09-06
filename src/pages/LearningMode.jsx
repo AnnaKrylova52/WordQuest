@@ -1,9 +1,11 @@
 import { useLocation } from "react-router-dom";
 import { BackButton } from "../ui/BackButton";
 import { useUserData } from "../store/useUserData";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ClickableWord } from "../ui/ClickableWord";
 export const LearningMode = () => {
+  const navigate = useNavigate();
   const [words, setWords] = useState([]);
   const [currentWord, setCurrentWord] = useState({});
   const [answers, setAnswers] = useState([]);
@@ -12,10 +14,16 @@ export const LearningMode = () => {
   const [isSecondPart, setSecondPart] = useState(false);
   const [term, setTerm] = useState("");
   const [selectedAnswer, setSelectedAnswer] = useState(false);
+  const [countMistakes, setCountMistakes] = useState(0);
+  const [isFinished, setFinished] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
+  const [error, setError] = useState(null);
   const { shuffleArray } = useUserData();
+  const [sessionWords, setSessionWords] = useState([]);
   const location = useLocation();
   const currentCollection = location.state?.currentCollection;
-
+  
   const handleStart = () => {
     const shuffled = shuffleArray(currentCollection.words).slice(0, 10);
     const words = shuffled.map((word) => ({
@@ -24,12 +32,16 @@ export const LearningMode = () => {
     }));
     const currentWord = words[0];
     setWords(words);
+    setSessionWords(words);
     setCurrentWord(currentWord);
     const answers = shuffleAnswers(currentWord.term);
-    console.log(answers);
     setStarted(true);
+    setStartTime(Date.now());
+    setFinished(false);
     setNext(false);
     setSecondPart(false);
+    setCountMistakes(0);
+    setError(null);
     setAnswers(answers);
   };
 
@@ -48,55 +60,80 @@ export const LearningMode = () => {
     setSelectedAnswer(word);
     if (word === currentWord.term) {
       const newWords = words.map((word) =>
-        word.id === currentWord.id ? { ...word, roundsLeft: 1 } : { ...word }
+        word.id === currentWord.id ? { ...word, roundsLeft: 1 } : word
       );
-      console.log(newWords);
       setWords(newWords);
+    } else {
+      setCountMistakes((prev) => prev + 1);
     }
   };
 
   const handleNextClick = () => {
+    setError(null);
     setNext(false);
     setSelectedAnswer(null);
     const index = words.findIndex((word) => word.id === currentWord.id);
-    if (currentWord.roundsLeft === 1) {
+    const nextIndex = (index + 1) % words.length;
+    const nextWord = words[nextIndex];
+
+    setCurrentWord(nextWord);
+
+    if (nextWord.roundsLeft === 1) {
       setSecondPart(true);
-      return;
-    }
-    if (index < words.length - 1) {
-      const nextWord = words[index + 1];
-      if (nextWord.roundsLeft === 2) {
-        const answers = shuffleAnswers(nextWord.term);
-        setAnswers(answers);
-      }
-      setCurrentWord(nextWord);
-      setTerm("");
     } else {
-      if (words[0].roundsLeft === 2) {
-        const answers = shuffleAnswers(words[0].term);
-        setAnswers(answers);
-      }
-      setCurrentWord(words[0]);
-      setTerm("");
+      setSecondPart(false);
+      const answers = shuffleAnswers(nextWord.term);
+      setAnswers(answers);
     }
+    setTerm("");
   };
 
   const handleConfirm = () => {
-    if (currentWord.term === term) {
-      const updatedWords = words.filter((word) => word.id !== currentWord.id);
+    if (term.trim() === "") {
+      return;
+    }
+    if (term.trim().toLowerCase() === currentWord.term.toLowerCase()) {
+      const updatedWords = words.filter((w) => w.id !== currentWord.id);
       setWords(updatedWords);
-      if (updatedWords.length > 0) {
-        const nextWord = updatedWords[0];
-        setCurrentWord(nextWord);
-        setTerm("");
-
-        if (nextWord.roundsLeft === 2) {
-          const answers = shuffleAnswers(nextWord.term);
-          setAnswers(answers);
-        }
-      } else {
+      if (updatedWords.length === 0) {
+        setFinished(true);
         setStarted(false);
+        setEndTime(Date.now());
+        return;
       }
+      const nextWord = updatedWords[0];
+      setCurrentWord(nextWord);
+      if (nextWord.roundsLeft === 1) {
+        setSecondPart(true);
+      } else {
+        setSecondPart(false);
+        const newAnswers = shuffleAnswers(nextWord.term);
+        setAnswers(newAnswers);
+      }
+    } else {
+      setError("wrong!");
+      setCountMistakes((prev) => prev + 1);
+      setTimeout(() => {
+        setError(null);
+      }, 1000);
+    }
+    setTerm("");
+  };
+
+  const handleShowWord = () => {
+    setNext(true);
+    setCountMistakes((prev) => prev + 1);
+    setTerm(currentWord.term);
+    setError(currentWord.term);
+  };
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleConfirm();
     }
   };
 
@@ -105,25 +142,71 @@ export const LearningMode = () => {
       <div className="max-w-6xl mx-auto px-4 dark:text-white w-full">
         <BackButton />
         <h1 className="dark:text-white text-3xl sm:text-4xl text-center mb-2 font-bold text-gray-800 ">
-          Learning
+          {isFinished ? "The learning session is over" : "Learning"}
         </h1>
+        {isFinished && (
+          <div className="flex justify-center mt-6">
+            <div className="flex  flex-col md:flex-row gap-4 md:gap-10 border px-6 md:px-20 bg-neutral-700/20  rounded-xl py-5">
+              <div className="flex flex-col items-center md:items-start">
+                <h3>Mistakes:</h3>
+                <span
+                  className={` font-medium ${
+                    countMistakes === 0 ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {countMistakes === 1
+                    ? `${countMistakes} mistake`
+                    : `${countMistakes} mistakes`}
+                </span>
+              </div>
+              <div className="flex flex-col items-center md:items-start">
+                <h3>Duration:</h3>
+                <span className=" font-medium">
+                  {formatTime(Math.floor((endTime - startTime) / 1000))}
+                </span>
+              </div>
+              <div className="flex flex-col items-center md:items-start">
+                <h3>Session words:</h3>
+                <div className="space-x-2 flex">
+                  {sessionWords.map((word, i) => (
+                   <ClickableWord key={i} word={word} isLast={i === sessionWords.length-1}/>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col items-center flex-1 px-4 mt-4">
         {!isStarted ? (
-          <button
-            className="px-6 py-3 bg-red-600 text-white rounded-4xl hover:bg-red-700 cursor-pointer transition-colors text-lg font-medium"
-            onClick={handleStart}
-          >
-            Start learning
-          </button>
+          <div className="space-x-4">
+            <button
+              className="px-6 py-3 bg-red-600 text-white rounded-4xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-700 cursor-pointer transition-colors text-lg font-medium"
+              onClick={handleStart}
+            >
+              {isFinished ? "Learn again" : " Start learning"}
+            </button>
+            {isFinished && (
+              <button
+                className="px-6 py-3 bg-neutral-400 hover:bg-neutral-500 dark:bg-neutral-600  text-white rounded-4xl dark:hover:bg-neutral-700 cursor-pointer transition-colors text-lg font-medium"
+                onClick={() => navigate("/collections")}
+              >
+                Browse collections
+              </button>
+            )}
+          </div>
         ) : (
           <div className="max-w-xl w-full">
-            <div className="flex justify-center">
-              <h3 className="text-center text-lg break-words px-4 dark:text-white">
+            <div className="flex flex-col text-center gap-2">
+              <h3 className=" text-xl break-words px-4 dark:text-white">
                 {currentWord?.definition}
               </h3>
+              {error && (
+                <span className="text-xl font-bold text-red-600">{error}</span>
+              )}
             </div>
+
             {!isSecondPart ? (
               <div className="grid grid-cols-2 gap-3 mt-6">
                 {answers?.map((word, i) => (
@@ -156,21 +239,28 @@ export const LearningMode = () => {
                   id="term"
                   placeholder="Enter the term"
                   value={term}
+                  onKeyDown={handleKeyPress}
                   onChange={(e) => setTerm(e.target.value)}
                   className="flex-1 border border-red-600 rounded-2xl p-4 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500 w-full dark:text-white"
                   autoFocus
                 />
-                <div className="space-x-4">
-                  <button
-                    onClick={handleConfirm}
-                    className="px-6 py-4 bg-red-600 text-white rounded-4xl hover:bg-red-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
-                  >
-                    Confirm
-                  </button>
-                  <button className="px-6 py-4 bg-neutral-600 text-white rounded-4xl hover:bg-neutral-700 cursor-pointer transition-colors font-medium whitespace-nowrap">
-                    Show word
-                  </button>
-                </div>
+                {!error && (
+                  <div className="space-x-4">
+                    <button
+                      onClick={handleConfirm}
+                      className="px-6 py-4 bg-red-600 text-white rounded-4xl hover:bg-red-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
+                    >
+                      Confirm
+                    </button>
+
+                    <button
+                      onClick={handleShowWord}
+                      className="px-6 py-4 bg-neutral-600 text-white rounded-4xl hover:bg-neutral-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
+                    >
+                      Show word
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             <div className="flex justify-end">
