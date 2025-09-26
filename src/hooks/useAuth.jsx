@@ -62,6 +62,7 @@ export const AuthProvider = ({ children }) => {
               profilePhoto: userData.profilePhoto,
               provider: firebaseUser.providerData[0]?.providerId || "email",
               role: role,
+              collectionsProgress: fullUserData?.collectionsProgress,
               timeGameRecords: fullUserData?.timeGameRecords,
               memoryGameRecords: fullUserData?.memoryGameRecords,
             });
@@ -81,7 +82,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const makeAdmin = async (targetUserId) => {
-    if (!isAdmin()) {
+    if (!isAdmin) {
       showNotification("error", "Only admins can perform this action");
       throw new Error("Permission denied");
     }
@@ -97,24 +98,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const getAllUsers = async () => {
-    if (!isAdmin()) {
-      showNotification("error", "Only admins can view all users");
-      return [];
-    }
-
-    try {
-      const usersSnapshot = await getDocs(collection(db, "users"));
-      return usersSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      showNotification("error", "Failed to load users");
-      return [];
-    }
-  };
   const regWithGoogle = async () => {
     try {
       const result = await signInWithGoogle();
@@ -481,7 +464,6 @@ export const AuthProvider = ({ children }) => {
         changePassword,
         showNotification,
         isAdmin,
-        getAllUsers,
         makeAdmin,
       }}
     >

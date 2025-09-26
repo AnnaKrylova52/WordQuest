@@ -14,6 +14,7 @@ import { Settings } from "../pages/Settings";
 import { UserCollections } from "../pages/UsersCollections";
 import { HomePage } from "../pages/HomePage";
 import { LearningMode } from "../pages/LearningMode";
+import { AdminPage } from "../pages/AdminPage";
 
 export const AppRouter = () => {
   const ProtectedRoute = () => {
@@ -22,7 +23,6 @@ export const AppRouter = () => {
     if (loading) {
       return <Loader />;
     }
-
     return user ? <Outlet /> : <Navigate to="/login" replace />;
   };
 
@@ -45,6 +45,7 @@ export const AppRouter = () => {
           <Route path="/:id/learning" element={<LearningMode />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/user/:userId" element={<UserCollections />} />
+          <Route path="/users" element={<AdminPage />} />
         </Route>
       </Route>
 

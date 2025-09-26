@@ -10,6 +10,8 @@ import {
   PencilSquareIcon,
   MagnifyingGlassIcon,
   SpeakerWaveIcon,
+  LockOpenIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/outline";
 import { useCollections } from "../store/useCollections";
 import { useAuth } from "../hooks/useAuth";
@@ -252,17 +254,24 @@ export const CollectionDetails = () => {
               {(user.uid === currentCollection?.ownerId || isAdmin) && (
                 <div className="flex items-center gap-2">
                   {user.uid === currentCollection?.ownerId && (
-                    <label className="inline-flex items-center cursor-pointer">
+                    <label className=" cursor-pointer">
                       <input
                         type="checkbox"
                         checked={currentCollection?.isPrivate || false}
                         onChange={handlePrivacyChange}
                         className="sr-only peer"
                       />
-                      <div className="relative w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-700 dark:peer-focus:ring-red-700 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-red-600 dark:peer-checked:bg-red-600"></div>
-                      <span className="ml-1 text-sm font-medium text-gray-900 dark:text-gray-300">
-                        Private
-                      </span>
+                      <div className=" flex items-center rounded-full">
+                        {currentCollection?.isPrivate ? (
+                          <div className="transition-all duration-300  text-red-600 hover:text-red-700">
+                            <LockClosedIcon className="w-6 h-6" />
+                          </div>
+                        ) : (
+                          <div className=" transition-all duration-300 hover:text-neutral-500 dark:text-white dark:hover:text-neutral-300">
+                            <LockOpenIcon className="w-6 h-6" />
+                          </div>
+                        )}
+                      </div>
                     </label>
                   )}
 
@@ -281,7 +290,7 @@ export const CollectionDetails = () => {
             <p>Created by</p>
             <button
               onClick={handleOwnerClick}
-              className="flex items-center gap-1 font-medium cursor-pointer hover:text-neutral-600 hover:dark:text-neutral-300 transition"
+              className="flex items-center gap-1 font-medium cursor-pointer hover:text-neutral-500 hover:dark:text-neutral-600 transition"
             >
               {currentCollection?.collectionOwner}
             </button>
@@ -311,6 +320,20 @@ export const CollectionDetails = () => {
                 />
               )}
             </div>
+          )}
+
+          {user?.collectionsProgress?.[currentCollection?.id] ? (
+            <div className="dark:text-white mb-4">
+              Your progress:{" "}
+              {
+                Object.values(
+                  user.collectionsProgress[currentCollection.id]
+                ).filter((wordProgress) => wordProgress.progress === 5).length
+              }
+              /{currentCollection.words.length} words learned
+            </div>
+          ) : (
+            ""
           )}
 
           <div className="mb-4 flex items-center gap-2">
@@ -371,15 +394,15 @@ export const CollectionDetails = () => {
                   <div className=" flex gap-2 flex-shrink-0">
                     <TrashIcon
                       onClick={() => deleteTerm(id, word.id)}
-                      className={`w-6 h-6 ${
+                      className={`w-6 h-6 transition-all duration-300 ${
                         currentCollection.words.length > 3
-                          ? "cursor-pointer hover:text-gray-200"
-                          : "text-gray-500"
+                          ? "cursor-pointer dark:hover:text-gray-400 hover:text-gray-600"
+                          : "text-gray-500 "
                       }`}
                     />
                     <PencilSquareIcon
                       onClick={() => handleEditTerm(word)}
-                      className="w-6 h-6 cursor-pointer"
+                      className="w-6 h-6 cursor-pointer dark:hover:text-gray-400 hover:text-gray-600 transition-all duration-300"
                     />
                   </div>
                 )}

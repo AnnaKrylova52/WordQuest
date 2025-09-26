@@ -20,7 +20,6 @@ export const useUserData = create((set, get) => ({
       const colRef = collection(db, "users");
       const querySnapshot = await getDocs(colRef);
       const collectionsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
         ...doc.data(),
       }));
       set({ usersData: collectionsData });
@@ -29,6 +28,7 @@ export const useUserData = create((set, get) => ({
       throw error;
     }
   },
+
   fetchUser: async (userId) => {
     try {
       const docRef = doc(db, "users", userId);
@@ -104,6 +104,24 @@ export const useUserData = create((set, get) => ({
       throw error;
     }
   },
+  updateLearningProgress: async (words, collectionId, userId) => {
+    const docRef = doc(db, "users", userId);
+
+    const progressUpdates = {};
+    words.forEach((word) => {
+      progressUpdates[`collectionsProgress.${collectionId}.${word.id}`] = {
+        progress: word.progress,
+        lastPracticed: new Date(),
+      };
+    });
+
+    try {
+      await updateDoc(docRef, progressUpdates);
+    } catch (error) {
+      throw error;
+    }
+  },
+
   updateUserPhoto: async (img, userId) => {
     try {
       await updateDoc(doc(db, `users`, userId), {

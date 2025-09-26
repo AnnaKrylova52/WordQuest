@@ -25,6 +25,18 @@ export const UserCollections = () => {
     handleUserPhoto();
   }, []);
 
+  if (userCollections.length === 0)
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <BackButton />
+        <div className="my-8 text-center">
+          <p className="text-gray-600 dark:text-gray-300 text-2xl">
+            No collections!
+          </p>
+        </div>
+      </div>
+    );
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <BackButton />

@@ -3,6 +3,8 @@ import { useCollections } from "../store/useCollections";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { UserIcon, HeartIcon } from "@heroicons/react/24/outline";
+import { useMemo, useState } from "react";
+import{MagnifyingGlassIcon} from "@heroicons/react/24/outline";
 
 export const LibraryPage = () => {
   const { collections } = useCollections();
@@ -21,7 +23,7 @@ export const LibraryPage = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
           My Library
@@ -36,10 +38,10 @@ export const LibraryPage = () => {
 
       {subscribedCollections.length === 0 && createdCollections.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-gray-600 dark:text-gray-300 text-2xl">
             No collections in your library. Create your first collection!
           </p>
-          <p>Or browse collections</p>
+          <p className="text-xl">Or browse collections</p>
         </div>
       ) : (
         <div>

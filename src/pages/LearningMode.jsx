@@ -4,8 +4,10 @@ import { useUserData } from "../store/useUserData";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClickableWord } from "../ui/ClickableWord";
+import { useAuth } from "../hooks/useAuth";
 export const LearningMode = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [words, setWords] = useState([]);
   const [currentWord, setCurrentWord] = useState({});
   const [answers, setAnswers] = useState([]);
@@ -19,17 +21,45 @@ export const LearningMode = () => {
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [error, setError] = useState(null);
-  const { shuffleArray } = useUserData();
+  const { shuffleArray, updateLearningProgress } = useUserData();
   const [sessionWords, setSessionWords] = useState([]);
   const location = useLocation();
   const currentCollection = location.state?.currentCollection;
-  
+
+  useEffect(() => {
+    const saveProgress = async () => {
+      if (isFinished && sessionWords.length > 0) {
+        try {
+          await updateLearningProgress(
+            sessionWords,
+            currentCollection.id,
+            user.uid
+          );
+        } catch (error) {
+          console.error("Ошибка при сохранении прогресса:", error);
+        }
+      }
+    };
+    saveProgress();
+    console.log("words", sessionWords);
+  }, [isFinished, sessionWords]);
+
   const handleStart = () => {
+    console.log(user);
     const shuffled = shuffleArray(currentCollection.words).slice(0, 10);
-    const words = shuffled.map((word) => ({
-      ...word,
-      roundsLeft: 2,
-    }));
+    const words = shuffled.map((word) => {
+      const wordProgress =
+        user?.collectionsProgress?.[currentCollection.id]?.[word.id]
+          ?.progress || 0;
+
+      return {
+        ...word,
+        roundsLeft: 2,
+        errors: 0,
+        progress: wordProgress,
+      };
+    });
+
     const currentWord = words[0];
     setWords(words);
     setSessionWords(words);
@@ -63,8 +93,21 @@ export const LearningMode = () => {
         word.id === currentWord.id ? { ...word, roundsLeft: 1 } : word
       );
       setWords(newWords);
+      setSessionWords((prev) =>
+        prev.map((w) => (w.id === currentWord.id ? { ...w, roundsLeft: 1 } : w))
+      );
     } else {
       setCountMistakes((prev) => prev + 1);
+      const newWords = words.map((word) =>
+        word.id === currentWord.id ? { ...word, errors: word.errors + 1 } : word
+      );
+      console.log(newWords);
+      setWords(newWords);
+      setSessionWords((prev) =>
+        prev.map((w) =>
+          w.id === currentWord.id ? { ...w, errors: w.errors + 1 } : w
+        )
+      );
     }
   };
 
@@ -75,7 +118,6 @@ export const LearningMode = () => {
     const index = words.findIndex((word) => word.id === currentWord.id);
     const nextIndex = (index + 1) % words.length;
     const nextWord = words[nextIndex];
-
     setCurrentWord(nextWord);
 
     if (nextWord.roundsLeft === 1) {
@@ -95,10 +137,21 @@ export const LearningMode = () => {
     if (term.trim().toLowerCase() === currentWord.term.toLowerCase()) {
       const updatedWords = words.filter((w) => w.id !== currentWord.id);
       setWords(updatedWords);
+      setSessionWords((prev) =>
+        prev.map((w) =>
+          w.id === currentWord.id && w.errors === 0 && w.progress < 5
+            ? {
+                ...w,
+                progress: w.progress + 1,
+              }
+            : w
+        )
+      );
       if (updatedWords.length === 0) {
         setFinished(true);
         setStarted(false);
         setEndTime(Date.now());
+
         return;
       }
       const nextWord = updatedWords[0];
@@ -113,6 +166,16 @@ export const LearningMode = () => {
     } else {
       setError("wrong!");
       setCountMistakes((prev) => prev + 1);
+      const newWords = words.map((word) =>
+        word.id === currentWord.id ? { ...word, errors: word.errors + 1 } : word
+      );
+      console.log(newWords);
+      setWords(newWords);
+      setSessionWords((prev) =>
+        prev.map((w) =>
+          w.id === currentWord.id ? { ...w, errors: w.errors + 1 } : w
+        )
+      );
       setTimeout(() => {
         setError(null);
       }, 1000);
@@ -123,14 +186,26 @@ export const LearningMode = () => {
   const handleShowWord = () => {
     setNext(true);
     setCountMistakes((prev) => prev + 1);
+    const newWords = words.map((word) =>
+      word.id === currentWord.id ? { ...word, errors: word.errors + 1 } : word
+    );
+    console.log(newWords);
+    setWords(newWords);
+    setSessionWords((prev) =>
+      prev.map((w) =>
+        w.id === currentWord.id ? { ...w, errors: w.errors + 1 } : w
+      )
+    );
     setTerm(currentWord.term);
     setError(currentWord.term);
   };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}m ${secs}s`;
   };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleConfirm();
@@ -165,11 +240,15 @@ export const LearningMode = () => {
                   {formatTime(Math.floor((endTime - startTime) / 1000))}
                 </span>
               </div>
-              <div className="flex flex-col items-center md:items-start">
+              <div className="flex flex-col items-center md:items-start max-w-xs md:max-w-md">
                 <h3>Session words:</h3>
-                <div className="space-x-2 flex">
+                <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-1">
                   {sessionWords.map((word, i) => (
-                   <ClickableWord key={i} word={word} isLast={i === sessionWords.length-1}/>
+                    <ClickableWord
+                      key={i}
+                      word={word}
+                      isLast={i === sessionWords.length - 1}
+                    />
                   ))}
                 </div>
               </div>
@@ -241,7 +320,7 @@ export const LearningMode = () => {
                   value={term}
                   onKeyDown={handleKeyPress}
                   onChange={(e) => setTerm(e.target.value)}
-                  className="flex-1 border border-red-600 rounded-2xl p-4 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500 w-full dark:text-white"
+                  className={`flex-1 border border-red-600 rounded-2xl p-4 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500 w-full dark:text-white`}
                   autoFocus
                 />
                 {!error && (

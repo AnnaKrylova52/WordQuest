@@ -8,11 +8,12 @@ import {
   Cog6ToothIcon,
   SunIcon,
   MoonIcon,
+  CogIcon,
 } from "@heroicons/react/24/outline";
 import { Drawer } from "./ui/Drawer";
 import { useTheme } from "./store/useTheme";
 export const Header = () => {
-  const { user, onLogout } = useAuth();
+  const { user, onLogout, isAdmin } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [isBurgerOpen, setBurgerOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
@@ -320,6 +321,21 @@ export const Header = () => {
                       <Cog6ToothIcon className="w-7 h-7" />
                       Settings
                     </NavLink>
+                    {isAdmin && (
+                      <NavLink
+                        to="/users"
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 cursor-pointer ${
+                            isActive
+                              ? " text-red-600"
+                              : "hover:text-red-600 transition dark:text-white"
+                          }`
+                        }
+                      >
+                        <CogIcon   className="w-7 h-7" />
+                        Admin panel
+                      </NavLink>
+                    )}
                     <button
                       onClick={toggleTheme}
                       className=" cursor-pointer hover:text-red-600 transition"

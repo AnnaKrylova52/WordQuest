@@ -54,9 +54,18 @@ export const CollectionCard = ({ collection }) => {
             )}
           </button>
         ) : (
-          <div className="bg-gradient-to-br from-neutral-200 to-red-400 dark:from-neutral-700 dark:to-red-600 rounded-full w-6 h-6  flex items-center justify-center border border-red-600">
-            <UserCircleIcon className=" text-red-600" />
-          </div>
+          <>   {user.profilePhoto ? (
+                  <img
+                    src={user?.profilePhoto}
+                    alt="Profile Photo"
+                    className="w-10 h-10 rounded-full border-2 border-red-600 object-cover"
+                  />
+                ) : (
+                  <div className="bg-gradient-to-br from-neutral-200 to-red-400 dark:from-neutral-700 dark:to-red-600 rounded-full w-12 h-12  flex items-center justify-center border-2 border-red-600">
+                    <UserCircleIcon className="w-10 h-10 text-red-600" />
+                  </div>
+                )}</>
+           
         )}
       </div>
 
