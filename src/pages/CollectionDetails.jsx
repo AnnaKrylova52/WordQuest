@@ -32,6 +32,7 @@ export const CollectionDetails = () => {
     loading,
     updateTerm,
     fetchDefinitions,
+    fetchTranslations,
     updateDescription,
     updateTitle,
     subscribeToCollection,
@@ -48,6 +49,7 @@ export const CollectionDetails = () => {
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [definitions, setDefinitions] = useState([]);
+  const [translations, setTranslations] = useState([]);
   const [newTerm, setNewTerm] = useState({ term: "", definition: "", id: "" });
   const { id } = useParams();
 
@@ -75,14 +77,21 @@ export const CollectionDetails = () => {
     });
   };
   const handleDefinitions = async (term) => {
-    const defs = await fetchDefinitions(term);
-    setDefinitions(defs);
+    try {
+      const defs = await fetchDefinitions(term);
+      const translations = await fetchTranslations(term);
+      setTranslations(translations);
+      setDefinitions(defs);
+    } catch (error) {
+      console.error("Error: ", error);
+    }
   };
   const handleDefinitionClick = (def) => {
     setDefinitions([]);
+    setTranslations([]);
     setNewTerm({
       ...newTerm,
-      definition: def.definition,
+      definition: def,
     });
     // После установки значения, обновляем высоту текстового поля
     setTimeout(() => {
@@ -489,8 +498,10 @@ export const CollectionDetails = () => {
                   rows="3"
                   className="w-full px-4 py-2 border border-red-600  rounded-lg  text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none overflow-hidden"
                 />
+                <div className="space-y-2">
                 {definitions.length !== 0 && (
                   <DefinitionsContainer
+                    title="Suggested definitions:"
                     definitions={definitions}
                     onClick={(def) => {
                       handleDefinitionClick(def);
@@ -498,6 +509,17 @@ export const CollectionDetails = () => {
                     setDefinitions={() => setDefinitions([])}
                   />
                 )}
+                {translations.length !== 0 && (
+                  <DefinitionsContainer
+                    title="Suggested translations:"
+                    definitions={translations}
+                    onClick={(def) => {
+                      handleDefinitionClick( def);
+                    }}
+                    setDefinitions={() => setTranslations([])}
+                  />
+                )}
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-2">

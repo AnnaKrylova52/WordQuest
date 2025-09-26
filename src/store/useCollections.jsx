@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { nanoid } from "nanoid";
 import axios from "axios";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 export const useCollections = create((set, get) => ({
   collections: [],
   userCollections: [],
@@ -320,9 +321,7 @@ export const useCollections = create((set, get) => ({
       data.forEach((word) => {
         word.meanings.forEach((meaning) => {
           meaning.definitions.forEach((def) => {
-            allDefinitions.push({
-              definition: def.definition,
-            });
+            allDefinitions.push(def.definition);
           });
         });
       });
@@ -333,6 +332,34 @@ export const useCollections = create((set, get) => ({
         // Термин не найден
         console.log("Term not found");
         return []; // Возвращаем пустой массив вместо ошибки
+      } else {
+        console.error("Error:", error);
+        throw error;
+      }
+    }
+  },
+  fetchTranslations: async (term) => {
+    const apiKey =
+      "dict.1.1.20250926T131801Z.6c9d8e632f021fa7.db5588c7e205acf107d2b80dc5465f1e40ee527e";
+    try {
+      const response =
+        await axios.get(`https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=${apiKey}&lang=en-ru&text=${term}
+`);
+      const data = response.data;
+      const allDefinitions = [];
+      data.def.forEach((def) => {
+        if (def.tr) {
+          def.tr.forEach((tr) => {
+            allDefinitions.push(tr.text);
+          });
+        }
+      });
+      return allDefinitions;
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // Термин не найден
+        console.log("Term not found");
+        return [];
       } else {
         console.error("Error:", error);
         throw error;
@@ -361,5 +388,4 @@ export const useCollections = create((set, get) => ({
       throw error;
     }
   },
-
 }));

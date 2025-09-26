@@ -1,5 +1,6 @@
 import { XMarkIcon } from "@heroicons/react/24/outline";
 export const DefinitionsContainer = ({
+  title,
   definitions,
   onClick,
   setDefinitions,
@@ -8,7 +9,7 @@ export const DefinitionsContainer = ({
     <div className="border border-gray-200 dark:border-neutral-700 rounded-lg p-3">
       <div className="flex justify-between">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Suggested definitions:
+          {title}
         </p>
         <XMarkIcon
           onClick={setDefinitions}
@@ -22,7 +23,7 @@ export const DefinitionsContainer = ({
             onClick={() => onClick(def)}
             className="p-2 text-sm text-gray-600 dark:text-gray-400 bg-white dark:bg-black rounded border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900/20 transition-colors"
           >
-            {def.definition}
+            {def}
           </div>
         ))}
       </div>

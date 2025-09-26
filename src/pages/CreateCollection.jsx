@@ -15,10 +15,12 @@ import { useEffect } from "react";
 export const CreateCollection = () => {
   const navigate = useNavigate();
   const [textareaRefs, setTextareaRefs] = useState({});
-  const { createCollection, fetchDefinitions } = useCollections();
+  const { createCollection, fetchDefinitions, fetchTranslations } =
+    useCollections();
   const [isPrivate, setPrivate] = useState(false);
   const { user, showNotification } = useAuth();
   const [definitions, setDefinitions] = useState([]);
+  const [translations, setTranslations] = useState([]);
   const [activeTermId, setActiveTermId] = useState(null);
   const [collection, setCollection] = useState({
     title: "",
@@ -31,7 +33,7 @@ export const CreateCollection = () => {
     firebaseId: "",
   });
   const handleDefinitionClick = (cardId, def) => {
-    updateWord(cardId, "definition", def.definition);
+    updateWord(cardId, "definition", def);
     setDefinitions([]);
     setActiveTermId(null);
 
@@ -46,9 +48,16 @@ export const CreateCollection = () => {
   };
 
   const handleDefinitions = async (cardId, term) => {
-    setActiveTermId(cardId);
-    const defs = await fetchDefinitions(term);
-    setDefinitions(defs);
+    try {
+      setActiveTermId(cardId);
+      const defs = await fetchDefinitions(term);
+      const translations = await fetchTranslations(term);
+      setDefinitions(defs);
+      setTranslations(translations);
+      console.log(defs);
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   const handleCreate = async () => {
@@ -91,11 +100,11 @@ export const CreateCollection = () => {
     setTextareaRefs((prev) => ({ ...prev, [newId]: null }));
   };
 
-  const updateWord = (id, filed, value) => {
+  const updateWord = (id, field, value) => {
     setCollection({
       ...collection,
       words: collection.words.map((card) =>
-        card.id === id ? { ...card, [filed]: value } : card
+        card.id === id ? { ...card, [field]: value } : card
       ),
     });
   };
@@ -224,6 +233,7 @@ export const CreateCollection = () => {
                         />
                       </button>
                     </div>
+               
                   </div>
                   <div className="space-y-2">
                     <label
@@ -254,11 +264,22 @@ export const CreateCollection = () => {
                     />
                     {activeTermId === card.id && definitions.length > 0 && (
                       <DefinitionsContainer
+                      title="Suggested definitions:"
                         definitions={definitions}
                         onClick={(def) => {
                           handleDefinitionClick(card.id, def);
                         }}
                         setDefinitions={() => setDefinitions([])}
+                      />
+                    )}
+                         {activeTermId === card.id && translations.length > 0 && (
+                      <DefinitionsContainer
+                      title="Suggested translations:"
+                        definitions={translations}
+                        onClick={(def) => {
+                          handleDefinitionClick(card.id, def);
+                        }}
+                        setDefinitions={() => setTranslations([])}
                       />
                     )}
                   </div>
