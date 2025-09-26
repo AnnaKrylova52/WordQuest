@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ConfirmationModal } from "../confirmationModal";
+import { ConfirmationModal } from "../ConfirmationModal";
 import { Modal } from "../Modal";
 export const AccountActions = ({
   deleteAccount,
