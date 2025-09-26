@@ -1,9 +1,5 @@
-import { useState, useRef } from "react";
-import {
-  TrashIcon,
-  ArrowLeftIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { TrashIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { nanoid } from "nanoid";
 import { useCollections } from "../store/useCollections";
 import { useNavigate } from "react-router-dom";
@@ -35,6 +31,7 @@ export const CreateCollection = () => {
   const handleDefinitionClick = (cardId, def) => {
     updateWord(cardId, "definition", def);
     setDefinitions([]);
+    setTranslations([]);
     setActiveTermId(null);
 
     // После установки значения, обновляем высоту текстового поля
@@ -51,11 +48,20 @@ export const CreateCollection = () => {
     try {
       setActiveTermId(cardId);
       const defs = await fetchDefinitions(term);
-      const translations = await fetchTranslations(term);
       setDefinitions(defs);
-      setTranslations(translations);
-      console.log(defs);
     } catch (error) {
+      setDefinitions([]);
+
+      console.error("Error:", error);
+    }
+  };
+  const handleTranslations = async (cardId, term) => {
+    try {
+      setActiveTermId(cardId);
+      const translations = await fetchTranslations(term);
+      setTranslations(translations);
+    } catch (error) {
+      setTranslations([]);
       console.error("Error:", error);
     }
   };
@@ -225,7 +231,10 @@ export const CreateCollection = () => {
                       />
                       <button
                         type="button"
-                        onClick={() => handleDefinitions(card.id, card.term)}
+                        onClick={() => {
+                          handleDefinitions(card.id, card.term);
+                          handleTranslations(card.id, card.term);
+                        }}
                         className="absolute right-2 bottom-1/3 p-1 rounded-full bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                       >
                         <MagnifyingGlassIcon
@@ -233,7 +242,6 @@ export const CreateCollection = () => {
                         />
                       </button>
                     </div>
-               
                   </div>
                   <div className="space-y-2">
                     <label
@@ -264,7 +272,7 @@ export const CreateCollection = () => {
                     />
                     {activeTermId === card.id && definitions.length > 0 && (
                       <DefinitionsContainer
-                      title="Suggested definitions:"
+                        title="Suggested definitions:"
                         definitions={definitions}
                         onClick={(def) => {
                           handleDefinitionClick(card.id, def);
@@ -272,9 +280,9 @@ export const CreateCollection = () => {
                         setDefinitions={() => setDefinitions([])}
                       />
                     )}
-                         {activeTermId === card.id && translations.length > 0 && (
+                    {activeTermId === card.id && translations.length > 0 && (
                       <DefinitionsContainer
-                      title="Suggested translations:"
+                        title="Suggested translations:"
                         definitions={translations}
                         onClick={(def) => {
                           handleDefinitionClick(card.id, def);

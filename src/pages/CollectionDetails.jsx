@@ -79,9 +79,15 @@ export const CollectionDetails = () => {
   const handleDefinitions = async (term) => {
     try {
       const defs = await fetchDefinitions(term);
+      setDefinitions(defs);
+    } catch (error) {
+      console.error("Error: ", error);
+    }
+  };
+  const handleTranslations = async (term) => {
+    try {
       const translations = await fetchTranslations(term);
       setTranslations(translations);
-      setDefinitions(defs);
     } catch (error) {
       console.error("Error: ", error);
     }
@@ -462,7 +468,10 @@ export const CollectionDetails = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => handleDefinitions(newTerm.term)}
+                  onClick={() => {
+                    handleDefinitions(newTerm.term);
+                    handleTranslations(newTerm.term);
+                  }}
                   className="absolute right-2 bottom-4 p-1 rounded-full bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
                 >
                   <MagnifyingGlassIcon
@@ -499,26 +508,26 @@ export const CollectionDetails = () => {
                   className="w-full px-4 py-2 border border-red-600  rounded-lg  text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none overflow-hidden"
                 />
                 <div className="space-y-2">
-                {definitions.length !== 0 && (
-                  <DefinitionsContainer
-                    title="Suggested definitions:"
-                    definitions={definitions}
-                    onClick={(def) => {
-                      handleDefinitionClick(def);
-                    }}
-                    setDefinitions={() => setDefinitions([])}
-                  />
-                )}
-                {translations.length !== 0 && (
-                  <DefinitionsContainer
-                    title="Suggested translations:"
-                    definitions={translations}
-                    onClick={(def) => {
-                      handleDefinitionClick( def);
-                    }}
-                    setDefinitions={() => setTranslations([])}
-                  />
-                )}
+                  {definitions.length !== 0 && (
+                    <DefinitionsContainer
+                      title="Suggested definitions:"
+                      definitions={definitions}
+                      onClick={(def) => {
+                        handleDefinitionClick(def);
+                      }}
+                      setDefinitions={() => setDefinitions([])}
+                    />
+                  )}
+                  {translations.length !== 0 && (
+                    <DefinitionsContainer
+                      title="Suggested translations:"
+                      definitions={translations}
+                      onClick={(def) => {
+                        handleDefinitionClick(def);
+                      }}
+                      setDefinitions={() => setTranslations([])}
+                    />
+                  )}
                 </div>
               </div>
 

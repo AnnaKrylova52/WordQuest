@@ -339,8 +339,7 @@ export const useCollections = create((set, get) => ({
     }
   },
   fetchTranslations: async (term) => {
-    const apiKey =
-      "dict.1.1.20250926T131801Z.6c9d8e632f021fa7.db5588c7e205acf107d2b80dc5465f1e40ee527e";
+    const apiKey = import.meta.env.VITE_API_KEY;
     try {
       const response =
         await axios.get(`https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=${apiKey}&lang=en-ru&text=${term}
