@@ -239,7 +239,7 @@ export const CollectionDetails = () => {
         <BackButton />
         <div className="mb-8">
           <div className="flex justify-between items-center">
-            <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-2">
+            <div className="flex items-center text-gray-900 dark:text-white gap-2 mb-2">
               <h1 className="text-3xl md:text-4xl font-bold ">
                 {currentCollection?.title}
               </h1>
@@ -264,7 +264,19 @@ export const CollectionDetails = () => {
                   )}
                 </button>
               ) : (
-                <UserCircleIcon className="h-8 w-8 " />
+                <div>
+                  {user.profilePhoto ? (
+                    <img
+                      src={user?.profilePhoto}
+                      alt="Profile Photo"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-red-600 object-cover"
+                    />
+                  ) : (
+                    <div className="bg-gradient-to-br from-neutral-200 to-red-400 dark:from-neutral-700 dark:to-red-600 rounded-full w-12 h-12  flex items-center justify-center border-2 border-red-600">
+                      <UserCircleIcon className="w-10 h-10 sm:w-12 sm:h-12 text-red-600" />
+                    </div>
+                  )}
+                </div>
               )}
               {(user.uid === currentCollection?.ownerId || isAdmin) && (
                 <div className="flex items-center gap-2">
@@ -311,31 +323,24 @@ export const CollectionDetails = () => {
             </button>
           </div>
 
-          {currentCollection?.description ? (
-            <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-4">
+          <div className="flex items-center text-gray-900 dark:text-white gap-2 mb-4">
+            {currentCollection?.description ? (
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
                 {currentCollection.description}
               </p>
-              {(user.uid === currentCollection?.ownerId || isAdmin) && (
-                <PencilSquareIcon
-                  onClick={() => setUpdateDescription(true)}
-                  className="h-6 w-6 cursor-pointer"
-                />
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center text-gray-900 dark:text-white gap-4 mb-4">
+            ) : (
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl break-words">
                 No description
               </p>
-              {(user.uid === currentCollection?.ownerId || isAdmin) && (
-                <PencilSquareIcon
-                  onClick={() => setUpdateDescription(true)}
-                  className="h-6 w-6 cursor-pointer"
-                />
-              )}
-            </div>
-          )}
+            )}
+
+            {(user.uid === currentCollection?.ownerId || isAdmin) && (
+              <PencilSquareIcon
+                onClick={() => setUpdateDescription(true)}
+                className="h-6 w-6 cursor-pointer"
+              />
+            )}
+          </div>
 
           {user?.collectionsProgress?.[currentCollection?.id] ? (
             <div className="dark:text-white mb-4">
@@ -365,7 +370,7 @@ export const CollectionDetails = () => {
           <div className="space-x-4 flex justify-center">
             <button
               onClick={handleMemoryGameClick}
-              className="text-white bg-red-800 border-b-3 border-transparent hover:border-b-3 hover:border-red-600 hover:dark:border-white py-2 px-6 rounded-lg cursor-pointer transition "
+              className="text-white bg-red-800 border-b-3 border-transparent hover:border-b-3 hover:border-red-600 hover:dark:border-white py-1 px-3 sm:py-2 sm:px-6 rounded-lg cursor-pointer transition "
             >
               Memory game
             </button>
@@ -373,7 +378,7 @@ export const CollectionDetails = () => {
               onClick={() =>
                 navigate(`/${id}/time-game`, { state: { currentCollection } })
               }
-              className="text-white bg-red-800 border-transparent border-b-3 hover:border-red-600 hover:dark:border-white hover:border-b-3   py-2 px-6 rounded-lg cursor-pointer transition "
+              className="text-white bg-red-800 border-transparent border-b-3 hover:border-red-600 hover:dark:border-white hover:border-b-3 py-1 px-3 sm:py-2 sm:px-6 rounded-lg cursor-pointer transition "
             >
               Time game
             </button>
@@ -381,32 +386,31 @@ export const CollectionDetails = () => {
               onClick={() =>
                 navigate(`/${id}/learning`, { state: { currentCollection } })
               }
-              className="text-white bg-red-800 border-transparent border-b-3 hover:border-b-3 hover:border-red-600 hover:dark:border-white box-border py-2 px-6 rounded-lg cursor-pointer transition "
+              className="text-white bg-red-800 border-transparent border-b-3 hover:border-b-3 hover:border-red-600 hover:dark:border-white box-border py-1 px-3 sm:py-2 sm:px-6 rounded-lg cursor-pointer transition "
             >
               Learning
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 dark:text-white">
+        <div className="grid grid-cols-1 gap-3 dark:text-white">
           {currentCollection?.words.map((word) => (
             <div
               key={word.id}
-              className="grid grid-cols-12 shadow-lg dark:shadow-none divide-x-2 gap-4 mb-4 rounded-lg p-4  items-center bg-white dark:bg-neutral-950"
+              className="grid grid-cols-1 divide-y-1 sm:divide-y-0 sm:grid-cols-12 shadow-lg dark:shadow-none sm:divide-x-2 gap-2 sm:gap-4 mb-4 rounded-lg p-4  sm:items-center bg-white dark:bg-neutral-950"
             >
-              <div className="flex items-center gap-2 py-4 pr-4 col-span-4">
-                <h3 className=" break-words">{word.term}</h3>
-                <SpeakerWaveIcon
-                  onClick={() => speak(word.term)}
-                  className="w-5 h-5 cursor-pointer text-gray-500 hover:text-gray-600"
-                />
-              </div>
-              <div className="flex justify-between items-center col-span-8 min-w-0">
-                <p className="py-4 pr-4 break-words min-w-0 flex-1">
-                  {word.definition}
-                </p>
+              <div className="flex items-center justify-between gap-2 py-2 sm:py-4 sm:pr-4 sm:col-span-4">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h3 className="break-words text-sm sm:text-base">
+                    {word.term}
+                  </h3>
+                  <SpeakerWaveIcon
+                    onClick={() => speak(word.term)}
+                    className="w-5 h-5 cursor-pointer text-gray-500 hover:text-gray-600 flex-shrink-0"
+                  />
+                </div>
                 {(user.uid === currentCollection?.ownerId || isAdmin) && (
-                  <div className=" flex gap-2 flex-shrink-0">
+                  <div className="flex gap-2 flex-shrink-0">
                     <TrashIcon
                       onClick={() => deleteTerm(id, word.id)}
                       className={`w-6 h-6 transition-all duration-300 ${
@@ -421,6 +425,11 @@ export const CollectionDetails = () => {
                     />
                   </div>
                 )}
+              </div>
+              <div className="flex justify-between items-center sm:col-span-8 min-w-0">
+                <p className="sm:py-4 pr-4 break-words min-w-0 flex-1">
+                  {word.definition}
+                </p>
               </div>
             </div>
           ))}

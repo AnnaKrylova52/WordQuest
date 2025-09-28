@@ -159,7 +159,7 @@ export const MemoryGame = () => {
           </div>
         </div>
         <div>
-          <h1 className="dark:text-white text-3xl sm:text-4xl text-center mb-2 font-bold text-gray-800 ">
+          <h1 className="dark:text-whitetext-2xl sm:text-3xl md:text-4xl text-center mb-2 font-bold text-gray-800 ">
             Memory Game
           </h1>
           <p className="text-center text-gray-600 dark:text-gray-300 mb-4">

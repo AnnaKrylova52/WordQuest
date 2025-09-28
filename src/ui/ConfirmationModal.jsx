@@ -36,13 +36,13 @@ export const ConfirmationModal = ({ title, setClose, setConfirm }) => {
         <div className="flex justify-center gap-4">
           <button
             onClick={setClose}
-            className="px-4 py-2 bg-neutral-400 hover:bg-neutral-500 dark:bg-neutral-600 text-white rounded-xl dark:hover:bg-neutral-700 transition-colors cursor-pointer"
+            className="px-4 py-2 bg-neutral-400 hover:bg-neutral-500 dark:bg-neutral-600 text-white rounded-3xl dark:hover:bg-neutral-700 transition-colors cursor-pointer"
           >
             No
           </button>
           <button
             onClick={setConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-700 transition-colors cursor-pointer"
+            className="px-4 py-2 bg-red-600 text-white rounded-3xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-700 transition-colors cursor-pointer"
           >
             Yes
           </button>

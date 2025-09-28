@@ -111,12 +111,12 @@ export const TimeGame = () => {
   };
   return (
     <div className="pt-6 pb-2">
-      <div className="max-w-6xl mx-auto px-4 dark:text-white">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 dark:text-white">
         <BackButton />
-        <h1 className="dark:text-white text-3xl sm:text-4xl text-center mb-2 font-bold text-gray-800 ">
+        <h1 className="dark:text-white text-2xl sm:text-3xl md:text-4xl text-center mb-2 font-bold text-gray-800 ">
           Time Game
         </h1>
-        <p className="text-center text-gray-600 dark:text-gray-300 mb-6">
+        <p className="text-center sm:text-base text-gray-600 dark:text-gray-300 mb-6">
           Match terms with their definitions
         </p>
         <div className="flex flex-col items-center justify-center space-y-6">
@@ -156,7 +156,7 @@ export const TimeGame = () => {
                   </div>
                 </div>
               )}
-              <div className="w-xl flex items-center justify-center">
+              <div className="w-full flex items-center justify-center">
                 <h3 className="text-center text-xl break-words px-4">
                   {currentWord?.definition}
                 </h3>
@@ -173,19 +173,19 @@ export const TimeGame = () => {
                   value={term}
                   onChange={(e) => setTerm(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  className="flex-1 border border-red-600 rounded-2xl p-4 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500 w-full"
+                  className="flex-1 border border-red-600 rounded-2xl p-4 bg-white dark:bg-neutral-950 focus:outline-none focus:ring-2 focus:ring-red-500 w-full text-sm sm:text-base"
                   autoFocus
                 />
-                <div className="space-x-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
                   <button
                     onClick={handleWordClick}
-                    className="px-6 py-4 bg-red-600 text-white rounded-4xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer transition-colors font-medium whitespace-nowrap"
+                    className="py-3  px-6 sm:py-4 bg-red-600 text-white rounded-4xl hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer transition-colors font-medium whitespace-nowrap"
                   >
                     Confirm
                   </button>
                   <button
                     onClick={handleSkipWord}
-                    className="px-6 py-4 bg-neutral-600 text-white rounded-4xl hover:bg-neutral-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
+                    className="py-3 px-6 sm:py-4 bg-neutral-600 text-white rounded-4xl hover:bg-neutral-700 cursor-pointer transition-colors font-medium whitespace-nowrap"
                   >
                     Skip word
                   </button>

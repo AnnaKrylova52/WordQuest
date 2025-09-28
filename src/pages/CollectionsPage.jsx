@@ -27,7 +27,7 @@ export const CollectionsPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           Collections
         </h1>

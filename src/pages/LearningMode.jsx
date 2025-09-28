@@ -46,7 +46,7 @@ export const LearningMode = () => {
 
   const handleStart = () => {
     console.log(user);
-    const shuffled = shuffleArray(currentCollection.words).slice(0, 10);
+    const shuffled = shuffleArray(currentCollection.words).slice(0, 3);
     const words = shuffled.map((word) => {
       const wordProgress =
         user?.collectionsProgress?.[currentCollection.id]?.[word.id]
@@ -216,7 +216,7 @@ export const LearningMode = () => {
     <div className="min-h-screen pt-6 pb-2 flex flex-col">
       <div className="max-w-6xl mx-auto px-4 dark:text-white w-full">
         <BackButton />
-        <h1 className="dark:text-white text-3xl sm:text-4xl text-center mb-2 font-bold text-gray-800 ">
+        <h1 className="dark:text-white text-2xl sm:text-3xl md:text-4xl text-center mb-2 font-bold text-gray-800 ">
           {isFinished ? "The learning session is over" : "Learning"}
         </h1>
         {isFinished && (

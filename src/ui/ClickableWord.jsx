@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { SpeakerWaveIcon } from "@heroicons/react/24/outline";
-
+import { useAuth } from "../hooks/useAuth";
 export const ClickableWord = ({ word, isLast }) => {
   const [isShowDefinition, setShowDefinition] = useState(false);
   const defenitionRef = useRef();
-  
+  const { showNotification } = useAuth();
   useEffect(() => {
     return () => {
       if ("speechSynthesis" in window) {
@@ -25,17 +25,17 @@ export const ClickableWord = ({ word, isLast }) => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   });
-    const speak = (text) => {
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "en-US";
-        utterance.rate = 0.8; // Скорость произношения
-        window.speechSynthesis.speak(utterance);
-      } else {
-        console.error("Браузер не поддерживает синтез речи");
-        showNotification("error", "Your browser does not support voicovers");
-      }
-    };
+  const speak = (text) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.8; // Скорость произношения
+      window.speechSynthesis.speak(utterance);
+    } else {
+      console.error("Your browser does not support voicovers");
+      showNotification("error", "Your browser does not support voicovers");
+    }
+  };
   return (
     <div className="font-medium relative flex items-center gap-0.5">
       <span>

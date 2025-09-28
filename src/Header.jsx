@@ -9,7 +9,11 @@ import {
   SunIcon,
   MoonIcon,
   CogIcon,
+  HomeIcon,
+  BookmarkIcon,
+  ClipboardDocumentIcon
 } from "@heroicons/react/24/outline";
+import { ConfirmationModal } from "./ui/ConfirmationModal";
 import { Drawer } from "./ui/Drawer";
 import { useTheme } from "./store/useTheme";
 export const Header = () => {
@@ -17,6 +21,7 @@ export const Header = () => {
   const { isDark, toggleTheme } = useTheme();
   const [isBurgerOpen, setBurgerOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
+  const [isLogOut, setLogOut] = useState(false)
   const userMenuRef = useRef();
   const userIconRef = useRef();
   const hoverTimeoutRef = useRef();
@@ -261,6 +266,20 @@ export const Header = () => {
               >
                 Your library
               </NavLink>
+              {isAdmin && (
+                <NavLink
+                  to="/users"
+                  className={({ isActive }) =>
+                    `flex items-center cursor-pointer ${
+                      isActive
+                        ? " text-red-600"
+                        : "hover:text-red-600 transition dark:text-white"
+                    }`
+                  }
+                >
+                  Admin panel
+                </NavLink>
+              )}
             </div>
             <div
               ref={userIconRef}
@@ -273,11 +292,11 @@ export const Header = () => {
                   <img
                     src={user?.profilePhoto}
                     alt="Profile Photo"
-                    className="w-12 h-12 rounded-full border-2 border-red-600 object-cover"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-red-600 object-cover"
                   />
                 ) : (
                   <div className="bg-gradient-to-br from-neutral-200 to-red-400 dark:from-neutral-700 dark:to-red-600 rounded-full w-12 h-12  flex items-center justify-center border-2 border-red-600">
-                    <UserCircleIcon className="w-12 h-12 text-red-600" />
+                    <UserCircleIcon className="w-10 h-10 sm:w-12 sm:h-12 text-red-600" />
                   </div>
                 )}
               </NavLink>
@@ -286,18 +305,18 @@ export const Header = () => {
                   ref={userMenuRef}
                   onMouseLeave={handleMouseLeave}
                   onMouseEnter={handleMenuMouseEnter}
-                  className="absolute top-full right-0 mt-2 w-80 text-black dark:text-white bg-white dark:bg-neutral-950 rounded-lg overflow-hidden shadow-lg z-50"
+                  className="absolute top-ful -right-10/12 sm:right-0 mt-2 w-80 text-black dark:text-white bg-white dark:bg-neutral-950 rounded-lg overflow-hidden shadow-lg z-50"
                 >
                   <div className="flex items-center gap-2 border-b px-4 py-2">
                     {user.profilePhoto ? (
                       <img
                         src={user?.profilePhoto}
                         alt="Profile Photo"
-                        className="w-15 h-15 rounded-full border-2 border-red-600 object-cover"
+                        className="w-14 h-14 sm:w-15 sm:h-15 rounded-full border-2 border-red-600 object-cover"
                       />
                     ) : (
                       <div className="bg-gradient-to-br from-neutral-200 to-red-400 dark:from-neutral-700 dark:to-red-600 rounded-full w-15 h-15  flex items-center justify-center border-2 border-red-600">
-                        <UserCircleIcon className="w-15 h-15 text-red-600" />
+                        <UserCircleIcon className="w-14 h-14 sm:w-15 sm:h-15 text-red-600" />
                       </div>
                     )}
                     <div>
@@ -310,6 +329,7 @@ export const Header = () => {
                   <div className="flex flex-col gap-4 p-4">
                     <NavLink
                       to="/settings"
+                      onClick={() => setUserMenuOpen(false)}
                       className={({ isActive }) =>
                         `flex items-center gap-3 cursor-pointer ${
                           isActive
@@ -321,21 +341,7 @@ export const Header = () => {
                       <Cog6ToothIcon className="w-7 h-7" />
                       Settings
                     </NavLink>
-                    {isAdmin && (
-                      <NavLink
-                        to="/users"
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 cursor-pointer ${
-                            isActive
-                              ? " text-red-600"
-                              : "hover:text-red-600 transition dark:text-white"
-                          }`
-                        }
-                      >
-                        <CogIcon   className="w-7 h-7" />
-                        Admin panel
-                      </NavLink>
-                    )}
+
                     <button
                       onClick={toggleTheme}
                       className=" cursor-pointer hover:text-red-600 transition"
@@ -350,14 +356,16 @@ export const Header = () => {
                         </div>
                       )}
                     </button>
+
                     <button
                       className="flex items-center gap-3 cursor-pointer hover:text-red-600 transition"
-                      onClick={onLogout}
+                      onClick={()=> setLogOut(true)}
                     >
                       <ArrowRightStartOnRectangleIcon className="w-7 h-7 cursor-pointer " />
                       Log Out
                     </button>
                   </div>
+                  {isLogOut && <ConfirmationModal title="Are you sure you want to log out?" setClose={()=> setLogOut(false)} setConfirm={onLogout} />}
                 </div>
               )}
             </div>
@@ -376,38 +384,56 @@ export const Header = () => {
             <div className="dark:text-white flex flex-col gap-6">
               <NavLink
                 to="/home"
+                onClick={() => setBurgerOpen(false)}
                 className={({ isActive }) =>
-                  `${
+                  `flex items-center gap-1 ${
                     isActive ? " text-red-600" : "hover:text-red-500 transition"
                   }`
                 }
               >
+                <HomeIcon className="w-5 h-5"/>
                 Home
               </NavLink>
               <NavLink
                 to="/collections"
+                onClick={() => setBurgerOpen(false)}
                 className={({ isActive }) =>
-                  `${
+                   `flex items-center gap-1 ${
                     isActive ? " text-red-600" : "hover:text-red-500 transition"
                   }`
                 }
               >
+                <ClipboardDocumentIcon className="h-5 w-5"/>
                 Card collections
               </NavLink>
               <NavLink
                 to="/user/collections"
+                onClick={() => setBurgerOpen(false)}
                 className={({ isActive }) =>
-                  `${
+                  `flex items-center gap-1 ${
                     isActive ? " text-red-600" : "hover:text-red-500 transition"
                   }`
                 }
               >
+                <BookmarkIcon className="w-5 h-5"/>
                 Your library
               </NavLink>
-              <button className="flex items-center gap-2" onClick={onLogout}>
-                Log Out
-                <ArrowRightStartOnRectangleIcon className="w-6 h-6 cursor-pointer" />
-              </button>
+              {isAdmin && (
+                <NavLink
+                  to="/users"
+                  onClick={() => setBurgerOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-1 cursor-pointer ${
+                      isActive
+                        ? " text-red-600"
+                        : "hover:text-red-600 transition dark:text-white"
+                    }`
+                  }
+                >
+                  <CogIcon className="w-5 -5"/>
+                  Admin panel
+                </NavLink>
+              )}
             </div>
           </Drawer>
         )}

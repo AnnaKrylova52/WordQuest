@@ -24,8 +24,8 @@ export const LibraryPage = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+      <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
           My Library
         </h1>
         <button

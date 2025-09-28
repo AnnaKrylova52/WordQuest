@@ -29,7 +29,7 @@ export const Drawer = ({ isOpen, onClose, children, title, size }) => {
         } ${size}`}
       >
         <div className="h-16" />
-        <header className="flex justify-between items-center p-2 sm:p-6 border-b border-neutral-400 dark:border-neutral-600">
+        <header className="flex justify-between items-center p-1 sm:p-2 border-b border-neutral-400 dark:border-neutral-600">
           <h2 className="text-2xl font-bold dark:text-white">{title}</h2>
           <button
             className="p-2 rounded-full hover:bg-neutral-300 dark:hover:bg-neutral-900 transition-colors hover:cursor-pointer"

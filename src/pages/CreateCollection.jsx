@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { TrashIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+  TrashIcon,
+  MagnifyingGlassIcon,
+  LockOpenIcon,
+  LockClosedIcon,
+} from "@heroicons/react/24/outline";
 import { nanoid } from "nanoid";
 import { useCollections } from "../store/useCollections";
 import { useNavigate } from "react-router-dom";
@@ -132,7 +137,7 @@ export const CreateCollection = () => {
       <div className="w-5xl mx-4 my-6">
         <BackButton />
         <div className="flex justify-between items-center my-6">
-          <h1 className="text-3xl font-bold dark:text-white ">
+          <h1 className="text-2xl sm:text-3xl font-bold dark:text-white ">
             Create new collection
           </h1>
           <div className="flex items-center gap-4">
@@ -143,10 +148,17 @@ export const CreateCollection = () => {
                 onChange={(e) => setPrivate(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="relative w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-700 dark:peer-focus:ring-red-700 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all  peer-checked:bg-red-600 dark:peer-checked:bg-red-600"></div>
-              <span className="ml-1 text-sm font-medium text-gray-900 dark:text-gray-300">
-                Private
-              </span>
+              <div className=" flex items-center rounded-full">
+                {isPrivate ? (
+                  <div className="transition-all duration-300  text-red-600 hover:text-red-700">
+                    <LockClosedIcon className="w-6 h-6" />
+                  </div>
+                ) : (
+                  <div className=" transition-all duration-300 hover:text-neutral-500 dark:text-white dark:hover:text-neutral-300">
+                    <LockOpenIcon className="w-6 h-6" />
+                  </div>
+                )}
+              </div>
             </label>
             <button
               onClick={handleCreate}
