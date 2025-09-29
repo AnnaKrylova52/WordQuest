@@ -54,8 +54,8 @@ export const SignIn = () => {
       {/* Левая часть с изображением */}
       <div className="lg:w-2/3 hidden lg:block relative">
         <img
-          src="src\assets\cartoon-book-shelve-background.svg"
-          alt="Book Shelve"
+          src="/cartoon-book-shelve-background.svg"
+          alt="Bookshelf"
           className="absolute inset-0 w-full h-full object-cover bg-red-500  dark:bg-red-800"
         />
       </div>
@@ -72,7 +72,7 @@ export const SignIn = () => {
               ) : (
                 <div className="z-10">
                   <div className="mb-10">
-                    <img src="src\assets\logo.svg" alt="logo" />
+                    <img src="/logo.svg" alt="logo" />
                   </div>
                   <h1 className=" text-4xl mb-2  dark:text-white text-center font-bold">
                     Weclome back

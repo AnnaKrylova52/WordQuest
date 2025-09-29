@@ -221,7 +221,7 @@ export const LearningMode = () => {
         </h1>
         {isFinished && (
           <div className="flex justify-center mt-6">
-            <div className="flex  flex-col md:flex-row gap-4 md:gap-10 border px-6 md:px-20 bg-neutral-700/20  rounded-xl py-5">
+            <div className="flex  flex-col md:flex-row gap-4 md:gap-10 border px-8 md:px-20 bg-neutral-700/20  rounded-xl py-5">
               <div className="flex flex-col items-center md:items-start">
                 <h3>Mistakes:</h3>
                 <span
@@ -234,13 +234,13 @@ export const LearningMode = () => {
                     : `${countMistakes} mistakes`}
                 </span>
               </div>
-              <div className="flex flex-col items-center md:items-start">
+              <div className="flex flex-col items-center md:items-start max-w-full">
                 <h3>Duration:</h3>
                 <span className=" font-medium">
                   {formatTime(Math.floor((endTime - startTime) / 1000))}
                 </span>
               </div>
-              <div className="flex flex-col items-center md:items-start max-w-xs md:max-w-md">
+              <div className="flex flex-col items-center md:items-start max-w-xs md:max-w-md w-full">
                 <h3>Session words:</h3>
                 <div className="flex flex-wrap gap-2 justify-center md:justify-start mt-1">
                   {sessionWords.map((word, i) => (

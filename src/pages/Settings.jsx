@@ -87,7 +87,7 @@ export const Settings = () => {
     <div className="flex justify-center mt-8">
       <div className="w-6xl space-y-8 dark:text-white mx-4">
         <div className="space-y-1">
-          <h3 className="font-medium">Personal information</h3>
+          <h3 className="font-medium text-xl mb-2">Personal information</h3>
           <div className="border border-red-600 rounded-xl p-4">
             <UserProfilePhoto
               showNotification={showNotification}

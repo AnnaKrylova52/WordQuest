@@ -37,16 +37,16 @@ export const ClickableWord = ({ word, isLast }) => {
     }
   };
   return (
-    <div className="font-medium relative flex items-center gap-0.5">
+    <div className="font-medium relative flex items-center gap-0.5 max-w-full">
       <span>
         <SpeakerWaveIcon
           onClick={() => speak(word.term)}
-          className="w-5 h-5 cursor-pointer"
+          className="w-5 h-5 cursor-pointer flex-shrink-0"
         />
       </span>
       <span
         onClick={() => setShowDefinition(!isShowDefinition)}
-        className=" cursor-pointer hover:underline decoration-dashed"
+        className="cursor-pointer hover:underline decoration-dashed whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
       >
         {word.term}
       </span>
@@ -55,7 +55,7 @@ export const ClickableWord = ({ word, isLast }) => {
       {isShowDefinition && (
         <div
           ref={defenitionRef}
-          className=" absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 dark:bg-neutral-700 bg-white dark:text-white text-sm rounded w-70 z-10"
+          className=" absolute bottom-full left-1/2 transform -translate-x-1/2 p-2 dark:bg-neutral-700 bg-white dark:text-white text-sm rounded max-w-50 w-max z-10 break-words shadow-lg"
         >
           {word.definition}
           {/* Стрелка */}

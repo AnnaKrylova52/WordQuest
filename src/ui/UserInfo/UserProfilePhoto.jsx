@@ -4,11 +4,9 @@ import {
   EyeIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-
 import imageCompression from "browser-image-compression";
 import { useEffect, useState } from "react";
 import { Modal } from "../Modal";
-
 export const UserProfilePhoto = ({
   updateUserPhoto,
   deleteUserPhoto,
@@ -101,7 +99,7 @@ export const UserProfilePhoto = ({
       </div>
 
       {/* Основной контейнер */}
-      <div className="flex flex-col sm:flex-row justify-between items-start w-full gap-4">
+      <div className="flex flex-col items-center w-full gap-4">
         {/* Блок с фото - всегда первый */}
         <div className="flex flex-col items-center w-full sm:w-auto">
           <div
@@ -207,7 +205,8 @@ export const UserProfilePhoto = ({
             </div>
           </div>
         )}
-        <div className="flex sm:flex-col  gap-4">
+
+        <div className="flex sm:flex-col gap-4">
           <button
             onClick={() => setIsChangingPhoto(!isChangingPhoto)}
             className={`dark:text-white font-medium border hover:bg-neutral-300/60 dark:hover:bg-neutral-800/60 border-red-600 p-2 px-3 rounded-3xl duration-300 transition cursor-pointer ${
@@ -218,12 +217,14 @@ export const UserProfilePhoto = ({
           >
             {isChangingPhoto ? "Cancel" : "Change Photo"}
           </button>
-          <button
-            onClick={handleDeletePhoto}
-            className="dark:text-white font-medium border hover:bg-neutral-300/60 dark:hover:bg-neutral-800/60 border-red-600 p-2 px-3 rounded-3xl duration-300 transition cursor-pointer"
-          >
-            Remove current
-          </button>
+          {!profilePhoto && (
+            <button
+              onClick={handleDeletePhoto}
+              className="dark:text-white font-medium border hover:bg-neutral-300/60 dark:hover:bg-neutral-800/60 border-red-600 p-2 px-3 rounded-3xl duration-300 transition cursor-pointer"
+            >
+              Remove current
+            </button>
+          )}
         </div>
       </div>
       {isModalOpen && (
